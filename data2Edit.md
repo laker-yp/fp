@@ -261,6 +261,10 @@ data GameTree board move = Node board [(move, GameTree board move)]
 gameTree :: (board -> [(move,board)]) -> board -> GameTree board move
 gameTree plays board = Node board [(m, gameTree plays b) | (m,b) <- plays board]
 ```
+**第一个输**入为(board -> [(move,board)])也就是plays
+  -意思是给你一个局面 board，返回所有合法走法and对应的新局面列表。
+**第二个输**入为board 也就是初始局面
+**输出**：从这个初始局面开始的整棵game tree
 
 为了让这个更具体一些，我们把它应用到游戏 [Nim](https://en.wikipedia.org/wiki/Nim) 上。
 
