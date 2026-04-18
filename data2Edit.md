@@ -173,20 +173,39 @@ withoutLargest (Fork x l r)     = Fork x l (withoutLargest r)
 
 <a name="rosetrees"></a>
 ## Rose trees
-
-有一个讨论这一节的视频，[available on Canvas](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=19dd5944-85a9-4513-bd10-ac6200e5cc73)。
-
-在 binary trees 中，我们有零分支（像 `Empty`）和二分支（像 `Fork`）。而在这里，我们可以有任意多个分支，包括零个、一个、两个、三个……具体取决于下面定义中 list 的长度：
+可理解为**多叉树**
+在 binary trees 中有零分支（像 `Empty`）和二分支（像 `Fork`）。
+```haskell
+data BT a = Empty | Fork a (BT a)(BT a)
+```
+而在这里，我们可以有任意多个分支，分支数取决于下面定义中 list 的长度：
 
 ```haskell
 data Rose a = Branch a [Rose a]
+--            Branch是一个构造器，表示为当前的node，有两个值根节点a和根节点的subtree列表
 ```
-
+例：
+```haskell
+        A
+      / | \
+     B  C  D
+       / \
+      E   F
+Branch 'A'
+  [ Branch 'B' []  --子树列表第一个为B，B的子树列表为[]
+  , Branch 'C'     --子树列表第二个为C
+      [ Branch 'E' [] --C的子树列表为EF...
+      , Branch 'F' []
+      ]
+  , Branch 'D' []
+  ]
+```
 注意，这里没有 empty rose tree，但是存在一种 rose tree：它有一个 label，同时没有任何 subtree（更准确地说，它的 subtrees 是一个空 list）。例如，rose tree 的 size 可以定义如下，因此它总是一个正数：
-
+**rose大小**
 ```haskell
 rsize :: Rose a -> Integer
 rsize (Branch _ ts) = 1 + sum [rsize t | t <- ts]
+--       不关心_,ts为子树列表
 ```
 
 它也可以等价地写成：
@@ -195,22 +214,31 @@ rsize (Branch _ ts) = 1 + sum [rsize t | t <- ts]
 rsize' :: Rose a -> Integer
 rsize' (Branch _ ts) = 1 + sum (map rsize' ts)
 ```
+把函数 rsize' 应用到列表 ts 的每个元素上
 
-height 的定义会稍微棘手一点。下面这个“看起来很自然”的定义：
-
+**rose 高**
+错误示范
 ```hs
 rheight :: Rose a -> Integer
-rheight (Branch _ ts) = 1 + maximum [rheight t | t <- ts] -- wrong
+rheight (Branch _ ts) = 1 + maximum [rheight t | t <- ts] -- 错
 ```
-
-是行不通的，因为空 list 的 maximum 是没有定义的。下面才是正确的定义：
-
+是行不通的，因为空 list 的 maximum ：maximum[]是没有定义的
+正确的定义：
 ```haskell
 rheight :: Rose a -> Integer
 rheight (Branch _ []) = 0
+----重点--------------
 rheight (Branch _ ts) = 1 + maximum [rheight t | t <- ts]
 ```
-
+例子
+```
+BDEF都是叶子，h=0
+        A        A的高度为1+max[0,1,0]=2
+      / | \
+     B  C  D     C的高度为 1+max[0,0] = 1
+       / \
+      E   F
+```
 第二个定义可以这样理解。在一个表达式 `Branch x ts` 中，我们把 `x` 称为 tree 的 root，把 subtrees 的 list `ts` 称为一个 `forest`。那么 forest `ts` 的 height 就是：
 
 `maximum (0 : [rheight' t | t <- ts])`
