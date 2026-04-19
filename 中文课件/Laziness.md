@@ -1,12 +1,12 @@
 # Laziness
 
-See also Chapter 15 of the book.
+惰性求值
 
 # Memoization
-
+因为laziness，所以可以记录下“已经算过的东西”，并且保存，从而避免重复计算
 ## A sample inefficient recursive definition
 
-再次考虑这个（以低效方式定义的）fibonacci function：
+这个是个（以低效方式定义的）fibonacci function：
 
 ```haskell
 fib :: Integer -> Integer
@@ -15,29 +15,6 @@ fib 1 = 1
 fib n = fib(n-2) + fib(n-1)
 ```
 
-下面是一些运行时间：
-
-```
-
-> fib 10
-> 89
-> (0.00 secs, 106,504 bytes)
-> fib 20
-> 10946
-> (0.02 secs, 4,647,448 bytes)
-> fib 30
-> 1346269
-> (1.30 secs, 562,665,480 bytes)
-> fib 35
-> 14930352
-> (14.10 secs, 6,239,298,880 bytes)
-> fib 36
-> 24157817
-> (22.98 secs, 10,095,351,920 bytes)
-> ```
-
-运行时间增长得非常快，这是因为有两个递归调用（你可以在脑中想象一下递归树）。
-
 ## Recursion via the fixed-point combinator `fix`
 
 ```haskell
@@ -45,7 +22,10 @@ fix :: (a -> a) -> a
 fix f = x
 where
 x = f x
+
+--x在经历函数f之后，输出仍然是x
 ```
+fix f 返回的是 f 的一个不动点
 
 这里是递归地定义了 `x`。我们通常更关心的是 `a` 是函数类型的情况，比如 `b -> c`。
 
@@ -54,6 +34,7 @@ x = f x
 ```haskell
 fibstep :: (Integer -> Integer) -> (Integer -> Integer)
 fibstep g = h
+---给我一个函数 g，我构造一个新函数 h 给你
 where
 h :: Integer -> Integer
 h 0 = 1
@@ -80,19 +61,33 @@ fib' = fibstep fib'
 我们可以用一个无限的惰性列表，来存储一个从非负整数（natural numbers）到某个类型 `a` 的函数：
 
 ```haskell
+store 输入一个函数(这个函数输入Integer输出结果a)然后返回一个结果a 的列表。
+
 store :: (Integer -> a) -> [a]
 store f = [f i | i <- [0..]]
 ```
+实际上就是生成[f 0, f 1, f 2, f 3, ...]
 
-然后我们也可以把它取回来：
+即不同n会生产的不同结果，然后打包进list
+
+比如f n = n * 10
+
+store f
+
+则输出[0,10,20,30,40,50,...]
+
+反之可以把它取回来：
 
 ```haskell
 fetch :: [a] -> (Integer -> a)
 fetch (x:xs) 0 = x
 fetch (x:xs) n = fetch xs (n-1)
 ```
+```
+fetch [10,20,30,40] 0 = 10
+```
 
-把这两个函数组合起来，我们得到一个函数：
+组合store和fetch，我们得到一个函数：
 
 ```haskell
 memoList :: (Integer -> a) -> (Integer -> a)
