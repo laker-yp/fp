@@ -5,17 +5,14 @@
 ## Why are types useful?
 
 在 programming languages 里，types 的作用就是**不允许**某些不合理的程序出现。
-更具体地说，types 可以保证：我们传给一个 function 的 arguments，必须是这个 function 原本设计好能处理的那种东西。
+保证：我们传给一个 function 的 arguments，必须是这个 function 原本设计好能处理的那种东西。
 
-比如说，假设有一个 function，它的作用是返回一个 natural number 的 double。如果我们不小心把一个 string 传进去，而不是 natural number，那 programme 就不知道应该怎么处理。
-Types 可以让我们在 compile time 就发现这种错误，并且在软件真正交付之前把问题修好，而不是等到 runtime 才发现，那时候就太晚了！
-在上面这个例子里，compiler 可以看出来：你把一个本来应该处理 natural numbers 的 function，用在了一个 `string` 类型的 input 上，因此它会提醒你这个 mistake。
+Types 可以让我们在 compile time 就发现这种错误
 
-大多数 programming languages 都有 typing 这个概念，也就是说 language 里每一个 valid expression 都会被分配一个 type。不过，不是所有 programming languages 都会同等严格地关注这些 types。
 
 ### Type inference
 
-在 Haskell 里，每一个 valid expression 都有一个 type，而且我们可以让 `ghci` 告诉我们这个 type。这就叫 **type inference**：
+合理的expression 都有一个 type，而且我们可以让 `ghci` 告诉我们这个 type。这就叫 **type inference**：
 ```hs
 ghci> :type False
 False :: Bool
