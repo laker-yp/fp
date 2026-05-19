@@ -21,18 +21,19 @@ if问一个 Bool 是否等于一个 char，这本身没有什么意义。
 
 *. **type class** 是一个 interface
 
-规定某些 types 必须支持哪些 operations。
+   规定某些 types 必须支持哪些 operations。
 
-例如：**Eq** 规定一个 type 如果属于 Eq，就应该支持：
+   例如：**Eq** 规定一个 type 如果属于 Eq，就应该支持：
 
-(==)
-(/=)这两个operation
+   (==)
+   (/=)这两个operation
+   
 
 *. type class 的 **instance**，就是某个已经实现了这些 operations 的 type
 
-比如**Int**就是一个instance，这个具体的type已经实现了type class中支持的operation（==）（!=）
+   比如**Int**就是一个instance，这个具体的type已经实现了type class中支持的operation（==）（!=）
 
-在 Haskell 里，operation `(==)` 有下面这个 type：
+   在 Haskell 里，operation `(==)` 有下面这个 type：
 ```hs
 ghci> :type (==)
 (==) :: Eq a => a -> a -> Bool
