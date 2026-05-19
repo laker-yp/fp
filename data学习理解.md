@@ -2,6 +2,8 @@
 
 我现在很多题写不出来，根本原因之一，不是递归本身太难，而是我对下面这些基础概念还不够清晰：
 
+在 Haskell 里，类型名和构造器名通常都大写开头
+
 - `data` 后面那一整行到底在说什么
 - 什么叫构造器
 - `a` 是什么
@@ -22,10 +24,10 @@ data Expr = Var Char | Not Expr | And Expr Expr
 
 要理解成：
 
-> 我在定义一种新的类型，名字叫 `Expr`。  
-> 一个 `Expr` 类型的值，可以用几种不同的“方式”造出来。  
-> 这些“造值的方法”就叫 **构造器**。
-
+> 我在定义一种新的类型，名字叫 `Expr（表达式）`。  
+> 一个 `Expr` 类型的值，可以用几种不同的“方式”造出来（Var,Not,And)
+> Var,Not,And为三个构造Expr类型的方法，也叫做构造器，
+> 比如 *Var Char* 用Var方法来处理参数a，从而构造一个Expr类型
 ---
 
 # 一、`data` 到底是在干嘛？
@@ -53,15 +55,13 @@ data Bool = False | True
 
 构造器可以先粗暴理解成：
 
-## “造出这个类型的值的方法 / 形状”
+## “一个能造出这个类型的方法”
 
-比如：
+## 不带参数的构造器
 
 ```haskell
 data Direction = L | R
 ```
-
-这句话的意思是：
 
 > `Direction` 类型的值，要么是 `L`，要么是 `R`
 
@@ -70,11 +70,7 @@ data Direction = L | R
 - `L` 是构造器
 - `R` 是构造器
 
-而且这里它们后面什么都没带。
-
-这种叫：
-
-## 不带参数的构造器
+而且这里它们后面什么都没带（不带参的构造器）
 
 ---
 
@@ -88,16 +84,9 @@ data Maybe a = Nothing | Just a
 
 这里定义的是类型 `Maybe a`，它有两种造法：
 
-- `Nothing`
-- `Just a`
-
-意思是：
-
-- `Nothing`：直接就是一个值
-- `Just a`：你要先给我一个 `a` 类型的东西，我才能造出一个 `Maybe a`
-
+- `Nothing` 这个构造器没有参数，就是直接一个值
+- `Just a` 这里面Just为构造器，为一个方法，用于将传的*a*进行构造
 比如：
-
 ```haskell
 Just 3
 Just 'x'
@@ -209,26 +198,6 @@ data Box a = Box a
 
 所以要写 `a`。
 
----
-
-# 六、怎么判断谁是类型名，谁是构造器？
-
-一个很好用的规律：
-
-## 在 Haskell 里，类型名和构造器名通常都大写开头
-
-比如：
-
-```haskell
-data Expr = Var Char | Not Expr
-```
-
-这里：
-
-- `Expr` 是类型名
-- `Var` 是构造器
-- `Not` 是构造器
-- `Char` 是一个已有的类型
 
 ---
 
@@ -314,7 +283,7 @@ data Maybe a = Nothing | Just a
 ## 两个参数
 
 ```haskell
-data Pair a b = Pair a b
+data Pair a b = MakePair a b
 ```
 
 `Pair` 需要带两个东西。
@@ -322,7 +291,7 @@ data Pair a b = Pair a b
 比如：
 
 ```haskell
-Pair 3 'x'
+MakePair 3 'x'
 ```
 
 ---
