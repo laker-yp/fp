@@ -1,14 +1,8 @@
 # `data` 后面那些东西到底是什么
 
-我现在很多题写不出来，根本原因之一，不是递归本身太难，而是我对下面这些基础概念还不够清晰：
 
 在 Haskell 里，类型名和构造器名通常都大写开头
 
-- `data` 后面那一整行到底在说什么
-- 什么叫构造器
-- `a` 是什么
-- 为什么有的后面带东西，有的什么都不带
-- 为什么有时候会递归地出现自己
 
 如果这里模糊，后面的 pattern matching、递归、写函数，都会很容易乱掉。
 
@@ -17,6 +11,14 @@
 # 总纲
 
 像这种定义：
+```haskell
+data Pair a = MkPair a a
+```
+Pair a 是一个类型，其中Pair 是类型构造器，
+
+MkPair 是数据构造器，用参数a来创建 Pair a 类型的值。
+
+MkPair 1 3 是一个具体的 Pair Int 类型的值
 
 ```haskell
 data Expr = Var Char | Not Expr | And Expr Expr
@@ -24,7 +26,7 @@ data Expr = Var Char | Not Expr | And Expr Expr
 
 要理解成：
 
-> 我在定义一种新的类型，名字叫 `Expr（表达式）`。  
+> 我在定义一个名字叫 `Expr（表达式）`的新类型
 > 一个 `Expr` 类型的值，可以用几种不同的“方式”造出来（Var,Not,And)
 > Var,Not,And为三个构造Expr类型的方法，也叫做构造器，
 > 比如 *Var Char* 用Var方法来处理参数a，从而构造一个Expr类型
