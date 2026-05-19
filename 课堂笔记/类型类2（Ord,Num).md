@@ -1,7 +1,5 @@
 # More on type classes and instances
-
-
-在这一节里，我们会详细学习两个重要的 type classes：
+目录：
 
 1. Type class `Ord`，用于 ordered types。
 2. Type class `Num`，用于 numeric types。
@@ -13,10 +11,8 @@
 
 ## The type `Ordering` and the typeclass `Ord`
 
-这一节也有一个 [video](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=c796ea2f-759d-4e2f-ae62-ac3d0170e5b7)。
-
-Type class `Ord` 实现的是这样一个想法：某个 type 的 elements 不仅可以比较 equality，还可以比较 **less than / greater than**。
-在 type `a` 上进行 comparison，可以看作一个 map：`compare : a -> a -> Ordering`，其中 type `Ordering` 定义如下：
+Type class `Ord` 实现的是这样一个想法：某个 type 的 elements 不仅可以比较是否相等(满足Eq)，还可以比较 **less than / greater than**。
+在 type `a` 上进行比较，可以看作一个 map：`compare : a -> a -> Ordering`，其中 type `Ordering` 定义如下：
 ```hs
 data  Ordering  =  LT | EQ | GT
           deriving (Eq, Ord, Enum, Read, Show, Bounded)
