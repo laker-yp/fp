@@ -100,54 +100,59 @@ ghci> 3.14159 + 2.71828
 
 ```hs
 ghci> :info Num
+
 class Num a where
   (+) :: a -> a -> a
   (-) :: a -> a -> a
-  (*) :: a -> a -> a
+  (*) :: a -> a -> a  --这些是支持的operation
   negate :: a -> a
   abs :: a -> a
-  signum :: a -> a
-  fromInteger :: Integer -> a
-  {-# MINIMAL (+), (*), abs, signum, fromInteger, (negate | (-)) #-}
-  	-- Defined in ‘GHC.Num’
-instance Num Word -- Defined in ‘GHC.Num’
-instance Num Integer -- Defined in ‘GHC.Num’
-instance Num Int -- Defined in ‘GHC.Num’
-instance Num Float -- Defined in ‘GHC.Float’
-instance Num Double -- Defined in ‘GHC.Float’
+。。。
+instance Num Word 
+instance Num Integer 
+instance Num Int 
+instance Num Float
+。。。
 ```
-这说明：任何 type `a`，只要它是 `Num` 的 instance，就会带有 operations `(+)`、`(-)`、`(*)`、`fromInteger` 等等。
-特别注意：没有 type annotation 的 `1` 并不是固定意义上的 integer，而是任何 type `a` 的 element，只要 `a` 是 `Num` 的 instance。更具体地说，`1` 是 integer `1 :: Integer` 在 function `fromInteger :: Integer -> a` 下的 image。
+这说明：任何 type `a`，只要它是 `Num` 的 instance，就会支持`(+)`、`(-)`、`(*)` 等等operations
 
-我们也看到 type class `Num` 已经定义了五个 **instances**，分别是 `Word`、`Integer`、`Int`、`Float` 和 `Double`。
-当我们想把 `1` 看成某个特定 numeric type 的 element 时，可以通过 **annotating** 它的 type 来做到，比如：
+1 如果没有写死是哪个type，就不一定是 Integer
+
+它可以是任何“Num”类型类里的 1，前提是那个 type 属于 Num，如Int,Float..
+
+更直白地说：
+
+1 本质上先是一个 Integer 里的整数 1，然后 Haskell 会通过 fromInteger 把它转换成你需要的数字类型，比如 Int、Float、Double 等。
+
+也就是说，1 可以根据场景变成不同 numeric type 里的 1。
 ```hs
-ghci> :type 1 :: Word
+ghci> :t 1 :: Word 【这里的“1 :: Word”将1的类型变成Word】
 1 :: Word :: Word
 ```
-这里，我们是在 **check** `1 :: Word`，而不是让 `ghci` 帮我们 **infer** `1` 的 type。`ghci` 只需要检查 `Word` 是不是 `Num` 的 instance。
+这里，我们是在 **check** `1 :: Word`！而不是让 `ghci` 帮我们 **infer** `1` 的 type
+
 类似地，对于 `(+)`，我们也可以检查：
 ```
-ghci> :type (+) :: Integer -> Integer -> Integer
-(+) :: Integer -> Integer -> Integer
-  :: Integer -> Integer -> Integer
+ghci> :type (+) :: Int -> Int -> Int
+(+) :: Int -> Int -> Int :: Int -> Int -> Int
 ```
 如果某个 type 没有被声明为 `Num` 的 instance，这个 check 就会失败，比如 `Char`：
 ```hs
 ghci> :type (+) :: Char -> Char -> Char
 
 <interactive>:1:1: error:
-    • No instance for (Num Char) arising from a use of ‘+’
-    • In the expression: (+) :: Char -> Char -> Char
+   
 ```
 
 ## See also
+Haskell 的 type class 确实有点像 Java 的 interface，因为它们都规定“某个东西必须支持哪些操作”
 
-3. A blog post comparing Java and Haskell: https://mmhaskell.com/blog/2019/1/28/why-haskell-iv-typeclasses-vs-inheritance. Do you agree with it? Why (not)?
+但是它不像 Java 的 inheritance 那样强调继承代码
 
+Haskell 的 type class 更像是在说：“这个 type 有某种能力。”
 ## Summary
 
 1. 我们详细学习了一个 function，它同时使用了 pattern matching on lists 和 `case` expression，而 `case` expression 是更一般的 pattern matching 形式。
-1. 我们看到了 instances 如何通过其他 instances 自动 derived 出来，例子是 `instance Ord a => Ord [a]`。
+1. 我们看到了 instances 如何通过其他 instances 自动 derived 出来，例子是 `instance Ord a => Ord [a]`这里a能比大小那么[a]也能
 1. 我们看了用于 number types 的 type class `Num`。
 1. 我们看到了如何使用 type annotation 来强制一个 Haskell expression 具有某个特定 type，比如 `1 :: Word`。
