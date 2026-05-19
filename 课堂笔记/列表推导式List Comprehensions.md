@@ -10,7 +10,7 @@ import Data.Char
 
 ## Basic Concepts
 
-在 mathematics 里，_comprehension_ notation 可以用已有 sets 构造新的 sets。例如：
+#### 在 mathematics 里
 
 {x^2|x属于{1...5}}
 
@@ -18,17 +18,19 @@ import Data.Char
 
 也就是所有满足 x 属于 set {1...5} 的 x^2。
 
-在 Haskell 里
+#### 在 Haskell 里
 
 ```hs
-> [x^2 | x <- [1..5]] 
+> [x^2 | x <- [1..5]]
+把[1..5]中每个元素依次输入到x，然后进行平方
+得到一个个新的元素，最后自动用[]括起来成为一个list
 [1,4,9,16,25]
 ```
 Symbol `|` 读作 _such that_【使得】，`<-` 读作 _drawn from_，expression【来自于】 
 
 `x <- [1..5]` 叫做 __generator__【生成器】。Generator 说明如何为 x 生成 values。
 
-Comprehensions 可以有 多个生成器，用逗号分开。例如：
+##### 可以有 多个生成器，用逗号分开。例如：
 
 ```hs
 > [(x,y) | x <- [1,2,3],  y <- [4,5]]
@@ -48,7 +50,12 @@ x到2的时候，内循环y变成[2..3]了
 ```
 
 使用 dependent generator，我们可以定义一个 library function，用来 _concat_ 一个列表的列表：
-
+```
+x   -- 一个元素
+xs  -- 一串 x，也就是 list
+xss -- 一串 xs，也就是 list of lists
+```
+知道xss后开始↓
 ```hs
 concat :: [[a]] -> [a]
 concat xss = [x | xs <- xss, x <- xs]
@@ -58,14 +65,16 @@ concat xss = [x | xs <- xss, x <- xs]
 > concat [[1,2,3],[4,5],[6]]
 [1,2,3,4,5,6]
 ```
-Wildcard pattern `_` 在 generators 里有时很有用，可以用来丢弃 list 中某些 elements。例如，一个从 list of pairs 中选出所有 first components 的 function 可以这样定义：
+ `_` 在 generators 用来丢弃 list 中某些元素
+ 
+ 例如这个方程，从 pairs的list 中选出所有第一个元素
 
 ```haskell
 firsts :: [(a,b)] -> [a]
 firsts ps = [x | (x, _) <- ps]
 ```
 
-类似地，计算 list length 的 library function 可以通过把每个 element 替换成 1，然后对结果 list 求 sum 来定义：
+计算length的function：通过把每个elem替换成 1，然后对结果 list 求 sum 来定义：
 
 ```hs
 length :: [a] -> Int
@@ -76,9 +85,9 @@ length xs = sum [1 | _ <- xs]
 
 ## Guards
 
-这一节也有一个 [video](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=b18b42b5-0509-4976-a51c-ac3e01048c63)。
+使用 **guards** 来限制前面 generators 产生的 values
 
-List comprehensions 可以使用 **guards** 来限制前面 generators 产生的 values。如果 guard 是 _true_，当前 values 会被保留；如果是 _false_，就会被丢弃。
+只保留待输入[]中复合guard条件的值
 
 例如：
 
@@ -87,7 +96,7 @@ List comprehensions 可以使用 **guards** 来限制前面 generators 产生的
 [2,4,6,8,10]
 ```
 
-类似地，一个把 positive integer 映射到它的 positive factors list 的 function 可以这样定义：
+类似地，一个把正int映射到它的 positive factors（正因子） list 的 function 可以这样定义：
 
 ```haskell
 factors :: Int -> [Int]
@@ -95,58 +104,41 @@ factors n = [x | x <- [1..n], n `mod` x == 0]
 ```
 例如：
 ```hs
-> factors 15
-[1,3,5,15]
+> factors 6
+[1,2,3,6]
 ```
 
-一个 positive integer 如果它的 factors 只有 1 和它自己，那么它就是 prime。因此，使用 `factors`，我们可以定义一个判断某个 number 是否 prime 的 function：
+使用 `factors`，我们可以定义一个判断某个 number 是否为 prime 
 
 ```haskell
 prime :: Int -> Bool
-prime n = factors n == [1,n]
-```
-例如：
-
-```hs
-> prime 15
-False
-
-> prime 7
-True
+prime n = 【factors n == [1,n]】
 ```
 
-Note: 判断像 15 这样的 number 不是 prime，并不要求 function `prime` 产生它所有的 factors。因为在 lazy evaluation 下，只要产生了除了 1 和它自己之外的任何 factor，结果 `False` 就可以立刻返回。
+Note: 判断一个非质数并不要求 function `prime` 产生它所有的 factors。因为在 lazy evaluation 下，只要产生了除了 1 和它自己之外的任何 factor，结果 `False` 就可以立刻返回。
 
-使用 guard，我们现在可以定义一个 function，返回某个给定 limit 以内所有 primes 的 list：
+返回某个给定 从0到n中所有 primes 的 list：
 
 ```haskell
 primes :: Int -> [Int]
 primes n = [x | x <- [2..n], prime x]
 ```
 
-例如：
-
-```hs
-> primes 40
-[2,3,5,7,11,13,17,19,23,29,31,37]
-```
-
 ## The Zip Function
 
-这一节也有一个 [video](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=aa33daea-3f09-40a7-9e74-ac3e01048ee7)。
-
-一个很有用的 library function 是 `zip`，它把两个 lists 映射成一个 pairs list，每个 pair 由两个 lists 中对应位置的 elements 组成。
-
+ `zip`把两个 lists 映射成一个pair的list，每个 pair 由两个 lists 中对应位置的元素组成
 ```hs
 zip :: [a] -> [b] -> [(a,b)]
 ```
 例如：
 
 ```hs
-> zip ['a','b','c'] [1,2,3,4]
+> zip ['a','b','c'] [1,2,3,4]  --4直接丢掉了
 [('a',1),('b',2),('c',3)]
 ```
-使用 `zip`，我们可以定义一个 function，返回一个 list 中所有 adjacent elements 的 pairs：
+使用 `zip`，我们可以定义一个 function
+
+返回一个 list 中所有 adjacent(相邻) elements的 pairs：
 
 ```haskell
 pairs :: [a] -> [(a,a)]
@@ -155,7 +147,7 @@ pairs xs = zip xs (tail xs)
 
 例如：
 ```hs
-> pairs [1,2,3,4]
+> pairs [1,2,3,4]   ==zip[1,2,3,4][2,3,4]
 [(1,2),(2,3),(3,4)]
 ```
 
@@ -192,12 +184,11 @@ positions x xs =
 ```
 
 ## String Comprehensions
+String 是一串被双引号包起来的 char。不过在内部，string被表示为char的lists。
 
-这一节也有一个 [video](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=bd34ce3f-2698-4ee6-8c4a-ac3e0104a34e)。
+例如             `"abc" :: String` 
 
-String 是一串被 double quotes 包起来的 characters。不过在内部，strings 被表示为 characters 的 lists。
-
-例如，string `"abc" :: String` 其实只是 list of characters `['a', 'b', 'c'] :: [Char]` 的 abbreviation。
+其实只是`['a', 'b', 'c'] :: [Char]` 的缩写
 
 因为 strings 本质上只是特殊的 lists，所以任何作用在 lists 上的 polymorphic function 也可以应用到 strings 上。例如：
 
@@ -212,7 +203,7 @@ String 是一串被 double quotes 包起来的 characters。不过在内部，st
 [('a',1),('b',2),('c',3)]
 ```
 
-类似地，list comprehensions 也可以用来定义 strings 上的 functions，比如计算某个 character 在 string 中出现了多少次：
+计算某个 char在string中出现了多少次：
 
 ```haskell
 count :: Char -> String -> Int
@@ -225,44 +216,52 @@ count x xs = length [x' | x' <- xs, x == x']
 4
 ```
 
-类似地，我们可以定义一个 function，返回 string 中 lower-case letters 和 particular characters 出现的数量：
+计算string 中小写和 particular characters 出现的数量：
+
+x 是否属于 'a' 到 'z'的写法是：
+
+x >= 'a' && x <= 'z'
 
 ```haskell
 lowers :: String -> Int
-lowers xs = length [x | x <- xs, x >= 'a' && x <= 'z']
+lowers xs = length [x | x <- xs, 【x >= 'a' && x <= 'z'】]
 ```
 
 例如：
 ```hs
-> lowers "Haskell"
-6
+> lowers "Hiii"
+3
 ```
 
-## Extended Programming Example - The Caesar Cipher
+## 凯撒密码
 
-这一节也有一个 [video](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=9b744b7b-a16b-4f6d-b901-ac3e0104c35d)。
+Caesar cipher 是一种很有名的 string加密，虽然它很垃圾
 
-Caesar cipher 是一种很有名的 strings encoding method，虽然它很 primitive。它做的事情很简单：把 string 中每个 letter 替换成 alphabet 中往后移动 _n_ 个位置，也就是 _shift factor_ 个位置的 letter；如果超过 alphabet 末尾，就从头绕回来。例如：
+目的：把 string 中每个 letter 替换成 alphabet 中往后移动 _n_ 个位置
 
-"haskell is fun" 在 n = 3 时会被 encoded 成 "kdvnhoo lv ixq"。
-
-"haskell is fun" 在 n = 10 时会被 encoded 成 "rkcuovv sc pex"。
+也就是 _shift factor_ 个位置的 letter；如果超过 alphabet 末尾，就从头绕回来
 
 ### Encoding and Decoding
 
-在这个 example 里，我们会使用一些处理 characters 的 standard functions，它们由一个叫 `Data.Char` 的 library 提供。可以通过在 script 开头加入下面这个 declaration 来加载它：
+在 script 开头加入下面这个 code 来加载一些方法
+
+ord :: Char -> Int //把一个 Char 转成它对应的数字编码
+
+chr 97  -- 'a'
 
 ```hs
 import Data.Char
 ```
 
-Note: 为了简单，我们只 encode string 里的 lower-case letters，其他 characters，比如 upper-case letters 和 punctuation，会保持不变。
+Note: 为了简单，我们只 encode string 里的 lower-case letters，其他比如 upper大写和 punctuation标点，会保持不变。
 
-我们先定义一个 function `let2int`，它把 lower-case letter 转换成 0 到 25 之间对应的 integer。我们也定义相反方向的 function `int2let`，把 number 转换成对应的 letter。
+`let2int`，它把 小写字母 转换成 0 到 25 之间对应的 integer
+
+`int2let`，把 number 转换成对应的 letter。
 
 ```haskell
 let2int :: Char -> Int
-let2int c = ord c - ord 'a'
+let2int c = ord c - ord 'a'  --已0为base，a等于0
 
 int2let :: Int -> Char
 int2let n = chr (ord 'a' + n)
@@ -277,7 +276,15 @@ int2let n = chr (ord 'a' + n)
 'a'
 ```
 
-使用上面两个 functions，我们可以定义 function `shift`。它对一个 lower-case letter 应用 shift factor：先把 letter 转换成对应 integer，加上 shift factor，再对 26 取余，最后把得到的 integer 转回 lower-case letter：
+定义`shift`。它对一个小写char应用 shift factor：
+
+1先把 letter 转换成对应 integer
+
+2加上 shift factor
+
+3再对 26 取余
+
+4最后把得到的 num 转回 小写char：
 
 ```haskell
 shift :: Int -> Char -> Char
@@ -306,34 +313,32 @@ encode n xs = [shift n x | x <- xs]
 
 例如：
 ```hs
-> encode 3 "haskell is fun"
-"kdvnhoo lv ixq"
+> encode 3 "fun"
+"ixq"
 ```
 
-我们不需要单独写一个 decode function。我们可以复用 `encode` function，然后给它一个 negative shift factor。
+直接复用 `encode` 然后给它一个 negative shift factor 就可以变成decode方法了
 
 例如：
 ```hs
-> encode (-3) "kdvnhoo lv ixq"
-"haskell is fun"
+> encode (-3) "ixq"
+"fun"
 ```
 
 ### Frequency Tables
 
-这一节也有一个 [video](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=874a8714-47e2-45ea-bfe0-ac3e0104d9f2)。
-
 破解 Caesar cipher 的关键观察是：English 中某些 letters 出现得比其他 letters 更频繁。通过分析大量 English text，我们可以得到下面这些 approximate percentage frequencies。
 
 ```haskell
-table :: [Float]
-table = [8.1, 1.5, 2.8, 4.2, 12.7, 2.2, 2.0, 6.1, 7.0,
-         0.2, 0.8, 4.0, 2.4, 6.7, 7.5, 1.9, 0.1, 6.0, 
-         6.3, 9.0, 2.8, 1.0, 2.4, 0.2, 2.0, 0.1]
+...
+e 出现频率约 12.7%
+...
+z 出现频率约 0.1%
 ```
 
-比如 letter 'e' 出现得最多，频率是 12.7%；letters 'q' 和 'z' 出现得最少，各自是 0.1%。
+比如 letter 'e' 出现得最多
 
-我们定义一个 function，用来计算一个 integer 相对于另一个 integer 的 percentage：
+我们定义一个 function，用来计算一个 integer 相对于另一个 integer 的 百分比：
 
 ```haskell
 percent :: Int -> Int -> Float
@@ -363,8 +368,6 @@ freqs xs = [percent (count x xs) n | x <- ['a'..'z']]
 ```
 
 ### Cracking the Cipher
-
-这一节也有一个 [video](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=29b5fe9f-ee0c-4f9b-b883-ac3e0104ff1f)。
 
 比较 observed frequencies list _os_ 和 expected frequencies list _es_ 的一个 standard method 是 _chi-square statistic_，定义为下面这个 summation：
 
