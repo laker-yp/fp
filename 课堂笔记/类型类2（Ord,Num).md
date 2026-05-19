@@ -8,10 +8,17 @@
 这个 instance 告诉我们：只要 `a` 是 `Ord` 的 instance，那么 `[a]` 也会是 `Ord` 的 instance。
 
 
-
 ## The type `Ordering` and the typeclass `Ord`
 
-Type class `Ord` 实现的是这样一个想法：某个 type 的 elements 不仅可以比较是否相等(满足Eq)，还可以比较 **less than / greater than**。
+Type class `Ord` 实现的是这样一个想法：
+
+某个 type 的 elements 不仅可以比较是否相等(满足Eq)，还可以比较 **less than / greater than**。
+
+目标是让Int，Char，Bool...都属于type class 【Ord】的instance，然后就可以进行下面的operation了
+3 < 5---
+'a' < 'z'---
+True > False
+
 在 type `a` 上进行比较，可以看作一个 map：`compare : a -> a -> Ordering`，其中 type `Ordering` 定义如下：
 ```hs
 data  Ordering  =  LT | EQ | GT
@@ -19,26 +26,31 @@ data  Ordering  =  LT | EQ | GT
 ```
 这里，`LT` 表示 *less than*，`EQ` 表示 *equal*，`GT` 表示 *greater than*。
 
-下面这段代码定义了 `Ord` class，适用于那些已经在 `Eq` class 里的 types `a`：
+下面的的代码是用于定义type class的，具体来说是 `Ord` 这个type class
 ```hs
-class  (Eq a) => Ord a  where
-    compare              :: a -> a -> Ordering
-    (<), (<=), (>=), (>) :: a -> a -> Bool
-    max, min             :: a -> a -> a
+class  (Eq a) => Ord a  where   --types `a`继承 `Eq` 这个type class
 
-        -- Minimal complete definition:
-        --      (<=) or compare
-        -- Using compare can be more efficient for complex types.
+下面三段是在规定 Ord 里面有哪些【functions】，意思是如果类型a是Ord，那么应该支持下面这三个【operation】
+1    compare              :: a -> a -> Ordering
+2    (<), (<=), (>=), (>) :: a -> a -> Bool
+3    max, min             :: a -> a -> a
+
+        如果你要让一个自定义 type 成为 Ord，你不用把所有 functions 都写出来。
+        至少定义 <= 或者 compare 其中一个就好了，其他Haskell可以自己推出来
+
+定义Ord支持的operation【1】
     compare x y
          | x == y    =  EQ
          | x <= y    =  LT
          | otherwise =  GT
 
-    x <= y           =  compare x y /= GT
-    x <  y           =  compare x y == LT
+定义Ord支持的operation【2】
+    x <= y           =  compare x y /= GT  【如果x跟y比，不是GT，那就说明x没有大于y，也就是x <= y】
+    x <  y           =  compare x y == LT  
     x >= y           =  compare x y /= LT
     x >  y           =  compare x y == GT
 
+定义Ord支持的operation【3】
 -- note that (min x y, max x y) = (x,y) or (y,x)
     max x y
          | x <= y    =  y
@@ -50,8 +62,16 @@ class  (Eq a) => Ord a  where
 
 `Ordering` 和 `Ord` 的 definition 之间看起来有一点 circularity，也就是它们互相引用了对方。我们可以把它理解成 mutually recursive definition。
 
+Ordering 作为一个 data type，先被定义出来=>
+然后 Ord 使用这个 type 作为返回值=>
+再然后 Ordering 可以被声明成 Ord 的一个 instance。
 
-比如，对 `a` 上的 lists 使用 `compare` function，也就是当 `a` 已经有一个 `compare` function 时，list 的比较可以这样实现：
+
+对 `a` 上的 lists 使用 `compare` function
+
+前提：`a` 已经满足了Ord,所以能使用 `compare` function了时
+
+那么list 的比较可以这样实现：
 ```hs
 instance (Ord a) => Ord [a] where
   compare [] []         = EQ
@@ -63,16 +83,6 @@ instance (Ord a) => Ord [a] where
 ```
 
 ----
-
-**Exercises**
-
-1. 通过阅读代码，解释两个 lists 是怎么被比较的。
-2. 运行一些 list comparisons 的 examples，来确认或反驳你的解释。
-
-这个 [video](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=a6abe9f7-b812-4af3-91b7-ac4200b9b26c) 解释了 `compare :: [a] -> [a] -> Ordering` 的 implementation。
-
-----
-
 
 
 ## The type class `Num`
