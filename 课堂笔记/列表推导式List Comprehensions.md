@@ -2,66 +2,52 @@
 
 这些 notes 应该和我们 textbook Programming in Haskell 的 chapter 5 一起读。
 
-* 为了教学目的，我们会讨论一些来自 [Haskell'98 standard prelude](https://www.haskell.org/onlinereport/standard-prelude.html) 的 examples。
-
-* See the [prelude for the current version of the language](https://hackage.haskell.org/package/base-4.12.0.0/docs/Prelude.html) for all predefined classes and their instances.
-
 ## Note:
-
-在你读完本 handout 最后 **The Caesar Cipher** example 里的 *Encoding and Decoding* section 之前，请先忽略这个 declaration。我们在这里提到它，是为了确保生成的 haskell file 在开头包含这个 import statement。
-
+下面这个只是为了最后的 **The Caesar Cipher** 
 ```haskell
 import Data.Char
 ```
 
 ## Basic Concepts
 
-这一节也有一个 [video](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=1bd321bf-1f1c-45fd-8e9a-ac3e01048680)。
-
 在 mathematics 里，_comprehension_ notation 可以用已有 sets 构造新的 sets。例如：
 
-![squarenumbers](./images/eq_1.png)
+{x^2|x属于{1...5}}
 
-它会产生 set {1, 4, 9, 16, 25}，也就是所有满足 x 属于 set {1...5} 的 x^2。
+它会产生 set {1, 4, 9, 16, 25}
 
-在 Haskell 里，类似的 comprehension notation 可以用旧 lists 构造 __new lists__。例如：
+也就是所有满足 x 属于 set {1...5} 的 x^2。
+
+在 Haskell 里
 
 ```hs
 > [x^2 | x <- [1..5]] 
 [1,4,9,16,25]
 ```
-Symbol `|` 读作 _such that_，`<-` 读作 _drawn from_，expression `x <- [1..5]` 叫做 __generator__。Generator 说明如何为 x 生成 values。
+Symbol `|` 读作 _such that_【使得】，`<-` 读作 _drawn from_，expression【来自于】 
 
-Comprehensions 可以有 _multiple_ generators，用 commas 分开。例如：
+`x <- [1..5]` 叫做 __generator__【生成器】。Generator 说明如何为 x 生成 values。
 
-```hs
-> [(x,y) | x <- [1,2,3], y <- [4,5]]
-[(1,4),(1,5),(2,4),(2,5),(3,4),(3,5)]
-```
-
-改变 generators 的顺序，会改变最终 list 中 elements 的顺序：
+Comprehensions 可以有 多个生成器，用逗号分开。例如：
 
 ```hs
-> [(x,y) | y <- [4,5], x <- [1,2,3]]
-[(1,4),(2,4),(3,4),(1,5),(2,5),(3,5)]
+> [(x,y) | x <- [1,2,3],  y <- [4,5]]
+    在这里x是外循环，y是循环
+输出↓
+[(1,4),(1,5),  (2,4),(2,5),  (3,4),(3,5)]
 ```
-
-Multiple generators 就像 nested loops，后面的 generators 更像更深层的 loops，它们的 variables 变化得更频繁。
-
 
 ## Dependent Generators
 
-这一节也有一个 [video](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=a5ce4d07-dd54-47cc-8c4d-ac3e010489c3)。
-
-后面的 generators 可以依赖前面 generators 引入的 variables：
+后面的 generator 可以依赖前面 generator 引入的 variable：
 
 ```hs
 > [(x,y) | x <- [1..3], y <- [x..3]]
+x到2的时候，内循环y变成[2..3]了
 [(1,1),(1,2),(1,3),(2,2),(2,3),(3,3)]
 ```
-上面的 list 包含所有 numbers pairs `(x,y)`，其中 `x,y` 都来自 list `[1..3]`，并且 `y` >= `x`。
 
-使用 dependent generator，我们可以定义一个 library function，用来 _concatenate_ 一个 list of lists：
+使用 dependent generator，我们可以定义一个 library function，用来 _concat_ 一个列表的列表：
 
 ```hs
 concat :: [[a]] -> [a]
