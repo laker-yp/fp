@@ -1,4 +1,5 @@
 小笔记
+type不一定是Int，Bool这种单个单词，也可以是(a,b)，Rose a，等等
 
 **tail**:去掉第一个元素之后剩下的 list。
 
