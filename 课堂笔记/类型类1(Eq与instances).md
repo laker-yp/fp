@@ -140,3 +140,27 @@ Ord 这个 type class 继承Eq
    因为 Haskell 需要保证：
 
     instance resolution 是确定的。
+## 12. 最终总结
+
+1. **Type class** 是一组 operations 的 interface。
+
+2. **Instance** 是某个具体 type 对这些 operations 的实现。
+
+3. `Eq a =>` 是 **class constraint**，表示 `a` 必须是 `Eq` 的 instance。
+
+4. `(++)` 不需要 constraint，因为它只拼接 list structure。
+
+5. `(==)` 需要 `Eq a`，因为它必须比较 values 是否相等。
+
+6. `Eq` 提供 `(==)` 和 `(/=)`。
+
+7. 如果 `a` 是 `Eq` 的 instance，那么 `[a]` 也是 `Eq` 的 instance。
+
+8. 如果 `a` 和 `b` 都是 `Eq` 的 instances，那么 `(a, b)` 也是 `Eq` 的 instance。
+
+9. `Ord` extends `Eq`，因为能比较大小的 type 也应该能比较相等。
+
+10. `Enum` 定义了 `enumFromTo`。
+
+11. Haskell 对同一个 type 和 type class 只允许一个 instance，是为了保证 instance resolution 不产生歧义。
+
