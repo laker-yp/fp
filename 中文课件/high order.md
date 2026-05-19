@@ -1,0 +1,659 @@
+# Higher-order Functions
+
+这些 notes 应该和我们 textbook Programming in Haskell 的 chapter 7 - Higher-order functions 一起读。
+
+* 为了教学目的，我们会讨论一些来自 [Haskell'98 standard prelude](https://www.haskell.org/onlinereport/standard-prelude.html) 的 examples。
+
+* See the [prelude for the current version of the language](https://hackage.haskell.org/package/base-4.12.0.0/docs/Prelude.html) for all predefined classes and their instances.
+
+## Note:
+
+在你读完本 handout 最后 **Binary String Transmitter** example 里的 *Base Conversion* section 之前，请先忽略这个 declaration。我们在这里提到它，是为了确保生成的 haskell file 在开头包含这个 import statement。
+
+```haskell
+import Data.Char
+```
+
+## Basic Concepts
+
+这一节也有一个 [video](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=582e9fdc-df8a-423f-ac3a-ac590154bfa7)。
+
+如果一个 function 接收另一个 function 作为 argument，或者返回一个 function 作为 result，那么它就叫 `higher-order`。
+
+```haskell
+twice :: (a -> a) -> a -> a
+twice f x = f (f x)
+```
+
+例如：
+
+```hs
+> twice (*2) 3
+12
+
+> twice (+10) 5
+25
+
+> twice (\ x -> x ^ 2) 3
+81
+
+> twice reverse [1,2,3]
+[1,2,3]
+```
+Function `twice` 是 higher-order，因为它的第一个 argument 是一个 function。
+
+### Why Are They Useful?
+
+Higher-order functions 可以让 code 更 reusable。比如 `twice` function 展示了我们如何把同一个 function 应用多次。`map` function 也是 code reusability 的一个很好例子。
+
+## Processing Lists
+
+这一节也有一个 [video](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=a3e15303-0a7e-4a0c-979a-ac590154c56d)。
+
+### The Map Function
+
+Higher-order library function `map` 会把一个 function 应用到 list 的每一个 element 上。
+
+```hs
+map :: (a -> b) -> [a] -> [b]
+```
+例如：
+
+```hs
+> map (+1) [1,3,5,7]
+[2,4,6,8]
+
+> map (^3) [1,3,5,7]
+[1,27,125,343]
+
+> map reverse ["conversation", "talking", "discussion"]
+["noitasrevnoc","gniklat","noissucsid"]
+
+```
+`map` function 可以用 list comprehension 非常简单地定义：
+
+```hs
+map :: (a -> b) -> [a] -> [b]
+map f xs = [f x | x <- xs]
+```
+另外，为了 proofs 的目的，map function 也可以用 recursion 来定义：
+
+```hs
+map :: (a -> b) -> [a] -> [b]
+map f []     = []
+map f (x:xs) = f x : map f xs
+```
+
+### The Filter Function
+
+Higher-order library function `filter` 会从 list 里选择所有满足 predicate 的 elements。
+
+```hs
+filter :: (a -> Bool) -> [a] -> [a]
+```
+例如：
+
+```hs
+> filter even [1..10]
+[2,4,6,8,10]
+```
+
+Filter 可以用 list comprehension 定义：
+
+```hs
+filter :: (a -> Bool) -> [a] -> [a]
+filter p xs = [x | x <- xs, p x]
+```
+
+另外，它也可以用 recursion 定义：
+
+```hs
+filter :: (a -> Bool) -> [a] -> [a]
+filter p [] = []
+filter p (x:xs)
+   | p x       = x : filter p xs
+   | otherwise = filter p xs
+```
+
+## The Foldr Function
+
+这一节也有一个 [video](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=fa187ee8-66fe-442b-a566-ac590154c9bc)。
+
+很多 list 上的 functions 都可以用下面这种简单的 recursion pattern 来定义：
+
+```hs
+f :: Num a => [a] -> a
+f []     = v
+f (x:xs) = x # f xs
+```
+Function `f` 把 empty list 映射到某个 value `v`，把任何 non-empty list 映射到某个 function `#` 作用在它的 head 和它的 tail 的 `f` 结果上。
+
+例如：
+
+```hs
+sum :: Num a => [a] -> a
+sum []     = 0
+sum (x:xs) = x + sum xs
+
+product :: Num a => [a] -> a
+product []     = 1
+product (x:xs) = x * product xs
+
+and :: [Bool] -> Bool
+and []     = True
+and (x:xs) = x && and xs
+```
+
+Higher-order library function `foldr`，也就是 _fold right_，把这种简单的 recursion pattern 封装了起来，其中 function `#` 和 value `v` 都作为 arguments 传进去。
+
+例如：
+
+```hs
+sum = foldr (+) 0
+
+product = foldr (*) 1
+
+or = foldr (||) False
+
+and = foldr (&&) True
+```
+
+`foldr` 本身可以用 recursion 定义：
+
+```hs
+foldr :: (a -> b -> b) -> b -> [a] -> b
+foldr f v []     = v
+foldr f v (x:xs) = f x (foldr f v xs)
+```
+
+不过，最好把 `foldr` _non-recursively_ 地理解成：同时把 list 中每一个 (`:`) 替换成给定 function，把 `[]` 替换成给定 value。可以总结为：
+
+```hs
+foldr (#) v [x0,x1,...,xn] = x0 # (x1 # (... (xn # v) ...))
+```
+
+例如：
+
+```hs
+sum [1,2,3]
+= foldr (+) 0 [1,2,3]
+= foldr (+) 0 (1:(2:(3:[])))
+= 1+(2+(3+0))
+= 6
+```
+把每个 (:) 替换成 (+)，把 [] 替换成 0。
+
+```hs
+product [1,2,3]
+= foldr (*) 1 [1,2,3]
+= foldr (*) 1 (1:(2:(3:[])))
+= 1*(2*(3*1))
+= 6
+```
+把每个 (:) 替换成 (*)，把 [] 替换成 1。
+
+### Other Foldr Examples
+
+虽然 `foldr` 封装的是一个简单的 recursion pattern，但它能定义的 functions 比一开始想象的更多。
+
+回忆一下 length function：
+
+```hs
+length :: [a] -> Int
+length []     = 0
+length (_:xs) = 1 + length xs
+```
+For example:
+
+```hs
+length [1,2,3]
+= length (1:(2:(3:[])))
+= 1+(1+(1+0))
+= 3
+```
+
+我们可以把每个 (:) 替换成 `\_ n -> 1+n`，把 [] 替换成 `0`，得到：
+
+```hs
+length :: [a] -> Int
+length = foldr (\_ n -> 1+n) 0
+```
+现在回忆一下 reverse function：
+
+```hs
+reverse :: [a] -> [a]
+reverse []     = []
+reverse (x:xs) = reverse xs ++ [x]
+```
+
+例如：
+
+```hs
+reverse [1,2,3]
+= reverse (1:(2:(3:[])))
+= (([] ++ [3]) ++ [2]) ++ [1]
+= [3,2,1]
+```
+
+把每个 (:) 替换成 `\x xs -> xs ++ [x]`，把 [] 替换成 `[]`。于是我们有：
+
+```hs
+reverse :: [a] -> [a]
+reverse = foldr (\x xs -> xs ++ [x]) []
+```
+
+最后，我们注意到 append function `(++)` 可以用 `foldr` 写得特别简洁：
+
+```hs
+(++ ys) = foldr (:) ys
+```
+
+这里我们把每个 (:) 替换成 `(:)`，把 [] 替换成 `ys`。
+
+更简洁的 definition 是：
+
+```hs
+(++) = foldr (:)
+```
+
+
+## The Foldl Function
+
+这一节也有一个 [video](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=d5364f51-89e2-4f6d-87ae-ac590154cd35)。
+
+我们也可以用一个被假设为 _associate to the left_ 的 operator，来定义 lists 上的 recursive functions。
+
+例如，function `sum` 可以用这种方式重新定义：使用一个 auxiliary function `sum'`，它额外接收一个 argument `v`，用来 accumulate 最终 result：
+
+```hs
+sum :: Num a => [a] -> a
+sum = sum' 0
+      where
+         sum' v []     = v
+         sum' v (x:xs) = sum' (v+x) xs
+```
+
+例如：
+
+```hs
+sum [1,2,3]
+= sum' 0 [1,2,3]
+= sum' (0+1) [2,3]
+= sum' ((0+1)+2) [3]
+= sum' (((0+1)+2)+3) []
+= (((0+1)+2)+3)
+= 6
+```
+
+从上面的 `sum` example 推广开来，很多 list 上的 functions 都可以用下面这种简单的 recursion pattern 来定义：
+
+```hs
+f :: Num a => a -> [a] -> a
+f v []     = v
+f v (x:xs) = f (v # x) xs
+```
+
+也就是说，这个 function 把 empty list 映射到 _accumulator_ value `v`，把任何 non-empty list 映射到对 tail 继续 recursive processing 的结果，而新的 accumulator value 是通过把 operator `#` 应用到当前 value 和 list 的 head 得到的。
+
+上面的 `sum` function 可以用 higher-order library function `foldl`，也就是 _fold left_，重写成：
+
+```hs
+sum :: Num a => [a] -> a
+sum = foldl (+) 0
+```
+
+类似地，我们可以定义：
+
+```hs
+product :: Num a => [a] -> a
+product = foldl (*) 1
+
+or :: [Bool] -> Bool
+or = foldl (||) False
+
+and :: [Bool] -> Bool
+and = foldl (&&) True
+
+length :: [a] -> Int
+length = foldl (\n _ -> n+1) 0
+```
+
+`foldl` function 可以用 recursion 定义：
+
+```hs
+foldl :: (a -> b -> a) -> a -> [b] -> a
+foldl f v []     = v
+foldl f v (x:xs) = foldl f (f v x) xs
+```
+不过，最好把 `foldl` _non-recursively_ 地理解为：使用一个被假设为向左结合的 operator `#`。可以总结为下面这个 equation：
+
+```hs
+foldl (#) v [x0,x1,...,xn] = (... ((v # x0) # x1) ...) #xn
+```
+
+## The Composition Operator
+
+这一节也有一个 [video](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=1ecaa5b5-799c-40cc-ba68-ac590154d461)。
+
+Library function `(.)` 会把两个 functions 的 composition 返回成一个 single function。
+
+```hs
+(.) :: (b -> c) -> (a -> b) -> (a -> c)
+f . g = \x -> f (g x)
+```
+
+也就是说，`f . g` 读作 `f` _composed with_ `g`，它是这样一个 function：接收一个 argument `x`，先把 function `g` 应用到这个 argument 上，然后再把 function `f` 应用到结果上。
+
+Composition 可以用来简化 nested function applications，减少 parentheses，并且避免显式写出最初的 argument。
+
+例如：
+
+```hs
+odd :: Int -> Bool
+odd n = not (even n)
+```
+
+可以定义成：
+
+```hs
+odd :: Int -> Bool
+odd = not . even
+```
+
+类似地，下面这些 definitions：
+
+```hs
+twice :: (a -> a) -> a -> a
+twice f x = f (f x)
+```
+
+```haskell
+sumsqreven :: Integral a => [a] -> a
+sumsqreven ns = sum (map (^2) (filter even ns))
+```
+可以更简单地改写成下面这样，这里加 prime 是为了给它们不同的 names：
+
+```haskell
+twice' :: (a -> a) -> a -> a
+twice' f = f . f
+
+sumsqreven' :: Integral a => [a] -> a
+sumsqreven' = sum . map (^2) . filter even
+```
+
+### Other Library Functions
+
+Library function `all` 判断 list 里的每一个 element 是否都满足某个 predicate。
+
+```hs
+all :: (a -> Bool) -> [a] -> Bool
+all p xs = and [p x | x <- xs]
+```
+
+例如：
+
+```hs
+> all even [2,4,6,8,10]
+True
+
+> all odd [1,3,7,9,10]
+False
+```
+
+对偶地，library function `any` 判断 list 里是否至少有一个 element 满足某个 predicate。
+
+```hs
+any :: (a -> Bool) -> [a] -> Bool
+any p xs = or [p x | x <- xs]
+```
+
+例如：
+
+```hs
+> any (== ' ') "abc def"
+True
+
+> any (> 10) [1,5,4,8,7]
+False
+```
+
+Library function `takeWhile` 会在 predicate 对 elements 成立的期间，从 list 中选择 elements。一旦遇到不满足 predicate 的 element，就停止。
+
+```hs
+takeWhile :: (a -> Bool) -> [a] -> [a]
+takeWhile p [] = []
+takeWhile p (x:xs)
+   | p x       = x : takeWhile p xs
+   | otherwise = []
+```
+
+例如：
+
+```hs
+> takeWhile (/= ' ') "abc def"
+"abc"
+
+> takeWhile even [2,4,6,7,8]
+[2,4,6]
+```
+
+对偶地，function `dropWhile` 会在 predicate 对 elements 成立的期间不断 remove elements，一旦遇到不满足 predicate 的 element，就停止并返回剩下的 list。
+
+```hs
+dropWhile :: (a -> Bool) -> [a] -> [a]
+dropWhile p [] = []
+dropWhile p (x:xs)
+   | p x       = dropWhile p xs
+   | otherwise = x:xs
+```
+
+例如：
+
+```hs
+> dropWhile (== 'a') "aaabcadef"
+"bcadef"
+
+> dropWhile odd [1,3,5,6,7]
+[6,7]
+```
+
+## Programming Example - Binary String Transmitter
+
+这一节也有一个 [video](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=75f228df-249a-4265-8d51-ac590154e7f9)。
+
+Binary number 是由 zeros 和 ones 组成的 sequence，这些 0 和 1 叫做 _bits_。当我们向左移动时，连续 bits 的 weight 会按 factor of two 增加。
+
+例如，binary number `1101` 可以理解成：
+
+```hs
+1101 = (8 * 1) + (4 * 1) + (2 * 0) + (1 * 1)
+```
+
+为了简化某些 functions 的 definition，在这个 example 后面的部分里，我们假设 binary numbers 以 _reverse_ order 写。
+
+例如，`1101` 现在会写成 `1011`，并且当我们向右移动时，连续 bits 的 weight 按 factor of two 增加：
+
+```hs
+1011 = (1 * 1) + (2 * 0) + (4 * 1) + (8 * 1)
+```
+
+### Base Conversion
+
+我们先 import 一个处理 characters 的 useful functions library，并且把 bits 的 type 声明成 integers 的 type synonym：
+
+```hs
+import Data.Char
+```
+
+```haskell
+type Bit = Int
+```
+
+我们可以用 `bin2int` function，把一个用 bits list 表示的 binary number 转换成 integer：
+
+```haskell
+bin2int :: [Bit] -> Int
+bin2int bits = sum [w*b | (w,b) <- zip weights bits]
+               where weights = iterate (*2) 1
+```
+
+Higher-order library function `iterate` 会通过不断把一个 function 应用到某个 value 上，产生一个 infinite list：
+
+```hs
+iterate f x = [x, f x, f (f x), f (f (f x)), ...]
+```
+
+因此，上面 `bin2int` definition 里的 expression `iterate (*2) 1` 会产生 weights list `[1,2,4,8,...]`，然后通过 list comprehension 计算 weighted sum。
+
+```hs
+> bin2int [1,0,1,1]
+13
+```
+
+不过，基于 binary numbers 的 algebraic properties，我们可以用更简单的方式定义 `bin2int` function。考虑任意 four-bit number [a,b,c,d]。把 `bin2int` 应用到它上面，会得到下面这个 weighted sum：
+
+```hs
+(1 * a) + (2 * b) + (4 * c) + (8 * d)
+```
+它可以被 restructuring 成下面这样：
+
+```hs
+(1 * a) + (2 * b) + (4 * c) + (8 * d)
+= a + (2 * b) + (4 * c) + (8 * d)
+= a + 2 * (b + (2 * c) + (4 * d))
+= a + 2 * (b + 2 * (c + (2 * d)))
+= a + 2 * (b + 2 * (c + 2 * (d + 2 * 0)))
+```
+
+从上面的结果可以看出，这个 conversion 可以写成：把每个 `cons` 替换成一个 function，这个 function 会把第一个 argument 加上第二个 argument 的两倍；同时把 empty list 替换成 zero。因此，`bin2int` 可以重写成下面这样，这里用了一个稍微不同的 name：
+
+```haskell
+bin2int' :: [Bit] -> Int
+bin2int' = foldr (\x y -> x + 2*y) 0
+```
+
+把 non-negative integer 转换成 binary number 的相反 function 可以写成：
+
+```haskell
+int2bin :: Int -> [Bit]
+int2bin 0 = []
+int2bin n = n `mod` 2 : int2bin (n `div` 2)
+```
+
+例如：
+```hs
+> int2bin 13
+[1,0,1,1]
+```
+
+现在我们可以定义 function `make8`，确保 binary numbers 都有相同 length，也就是 8 bits。它会根据需要 truncate 或 extend 一个 binary number，让它变成 8 bits long：
+
+```haskell
+make8 :: [Bit] -> [Bit]
+make8 bits = take 8 (bits ++ repeat 0)
+```
+例如：
+
+```hs
+> make8 [1,0,1,1]
+[1,0,1,1,0,0,0,0]
+```
+
+### Transmission
+
+这一节也有一个 [video](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=8d63a917-4e2a-43ad-8177-ac590155117d)。
+
+现在我们可以定义一个 function，把 characters string encode 成 bits list：先把每个 character 转成 Unicode number，再把每个 number 转成 eight-bit binary number，最后把这些 binary numbers concatenate 在一起，得到一个 bits list。
+
+```haskell
+encode :: String -> [Bit]
+encode = concat . map (make8 . int2bin . ord)
+```
+
+例如：
+```hs
+> encode "abc"
+[1,0,0,0,0,1,1,0,0,1,0,0,0,1,1,0,1,1,0,0,0,1,1,0]
+```
+
+要 decode 一个 bits list，我们首先定义 function `chop8`，把这样的 list 切成一个个 eight-bit binary numbers：
+
+```haskell
+chop8 :: [Bit] -> [[Bit]]
+chop8 [] = []
+chop8 bits = take 8 bits : chop8 (drop 8 bits)
+```
+现在我们可以定义 `decode` function：它先 chop 一个 bits list，再把每个得到的 binary number 转成 Unicode number，最后转成 character：
+
+```haskell
+decode :: [Bit] -> String
+decode = map (chr . bin2int) . chop8
+```
+例如：
+
+```hs
+> decode [1,0,0,0,0,1,1,0,0,1,0,0,0,1,1,0,1,1,0,0,0,1,1,0]
+"abc"
+```
+最后，我们可以定义 function `transmit`，模拟把一个 characters string 作为 bits list 进行 transmission。这里我们使用一个 perfect communication channel，并且用 identity function 来 model 它：
+
+```haskell
+transmit :: String -> String
+transmit = decode . channel . encode
+
+channel :: [Bit] -> [Bit]
+channel = id
+```
+
+例如：
+```hs
+> transmit "higher-order functions are easy"
+"higher-order functions are easy"
+```
+
+上面的 example 实际上封装了三个 functions：encoding、transmission 和 decoding。我们可以把 encoding 和 decoding steps 分开，看看中间发生了什么。Channel 是一个 identity function，也就是说，它输出的东西和它收到的 input 完全一样。
+
+```hs
+> encode "higher-order functions are easy"
+[0,0,0,1,0,1,1,0,1,0,0,1,0,1,1,0,1,1,1,0,0,1,1,0,0,0,0,1,0,1,1,0,1,0,1,0,0,1,1,0,0,1,0,0,1,1,1,0,1,0,1,1,0,1,0,0,1,1,1,1,0,1,1,0,0,1,0,0,1,1,1,0,0,0,1,0,0,1,1,0,1,0,1,0,0,1,1,0,0,1,0,0,1,1,1,0,0,0,0,0,0,1,0,0,0,1,1,0,0,1,1,0,1,0,1,0,1,1,1,0,0,1,1,1,0,1,1,0,1,1,0,0,0,1,1,0,0,0,1,0,1,1,1,0,1,0,0,1,0,1,1,0,1,1,1,1,0,1,1,0,0,1,1,1,0,1,1,0,1,1,0,0,1,1,1,0,0,0,0,0,0,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0,1,1,1,0,1,0,1,0,0,1,1,0,0,0,0,0,0,1,0,0,1,0,1,0,0,1,1,0,1,0,0,0,0,1,1,0,1,1,0,0,1,1,1,0,1,0,0,1,1,1,1,0]
+
+> decode [0,0,0,1,0,1,1,0,1,0,0,1,0,1,1,0,1,1,1,0,0,1,1,0,0,0,0,1,0,1,1,0,1,0,1,0,0,1,1,0,0,1,0,0,1,1,1,0,1,0,1,1,0,1,0,0,1,1,1,1,0,1,1,0,0,1,0,0,1,1,1,0,0,0,1,0,0,1,1,0,1,0,1,0,0,1,1,0,0,1,0,0,1,1,1,0,0,0,0,0,0,1,0,0,0,1,1,0,0,1,1,0,1,0,1,0,1,1,1,0,0,1,1,1,0,1,1,0,1,1,0,0,0,1,1,0,0,0,1,0,1,1,1,0,1,0,0,1,0,1,1,0,1,1,1,1,0,1,1,0,0,1,1,1,0,1,1,0,1,1,0,0,1,1,1,0,0,0,0,0,0,1,0,0,1,0,0,0,0,1,1,0,0,1,0,0,1,1,1,0,1,0,1,0,0,1,1,0,0,0,0,0,0,1,0,0,1,0,1,0,0,1,1,0,1,0,0,0,0,1,1,0,1,1,0,0,1,1,1,0,1,0,0,1,1,1,1,0]
+"higher-order functions are easy"
+```
+
+## Exercises
+
+(1) 那些 return functions as results 的 higher-order functions 更常被称为什么？
+
+(2) 使用 functions `map` 和 `filter` 表达 comprehension `[f x | x <- xs, p x]`。Function type 给出如下：
+```hs
+fun :: Num a => (a -> a) -> (a -> Bool) -> [a] -> [a]
+```
+例如：
+```
+> fun (^2) even [1..20]
+[4,16,36,64,100,144,196,256,324,400]
+
+> fun (^2) odd [1..20]
+[1,9,25,49,81,121,169,225,289,361]
+```
+(3) 使用 `foldr` 重新定义 `map f` 和 `filter p`。下面是 lecture notes 里的 `map` 和 `filter` definitions，供你参考。
+```hs
+map :: (a -> b) -> [a] -> [b]
+map f []     = []
+map f (x:xs) = f x : map f xs
+
+filter :: (a -> Bool) -> [a] -> [a]
+filter p [] = []
+filter p (x:xs)
+   | p x       = x : filter p xs
+   | otherwise = filter p xs
+```
+
+(4) 定义一个 function `altMap :: (a -> b) -> (a -> b) -> [a] -> [b]`，它会交替地把两个 argument functions 应用到 list 中连续的 elements 上。
+
+例如：
+```hs
+> altMap (+10) (+100) [0,1,2,3,4]
+[10,101,12,103,14]
+```
