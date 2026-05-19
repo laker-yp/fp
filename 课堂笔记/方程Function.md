@@ -197,54 +197,52 @@ sndElem (_:x:_) = x
 
 ### Case expressions
 
-前面提到的 patterns 是一些特殊形式，比如针对 Booleans 和 lists 的写法。
-更一般的 pattern matching 形式，是通过 `case` expressions 来写：
+通过 `case` expressions 来写pattern
 
 ```haskell
 isEmpty2 :: [a] -> Bool
 isEmpty2 x = case x of [] -> True
                        (_:_) -> False
 ```
-这里很重要的一点是：所有 patterns 必须完全对齐，也就是说 `[]` 和 `(_:_)` 必须从同一列开始。
+所有patterns 必须完全对齐，也就是说 `[]` 和 `(_:_)` 必须从同一列开始。
 
 ## Lambda expressions
 
-Lambda expressions 是**没有名字的** functions。它们在 **higher-order functions** 里特别有用，而 higher-order functions 会在后面的课里讲。
-这一节配套的视频在 [这里](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=5734065c-57af-43b0-a5be-ac400000eb9c)。
+Lambda expressions 是**没有名字的** functions
+\x -> x * 2 是个可以直接使用的function，不过没有名字
 
-Lambda expressions 的形式是 `\<input variables> -> <output>`。
-比如，我们可以把一个返回自身 double 的 function 定义成 `\x -> 2 * x`。
-这里，input variable 用 backslash `\` 表示。箭头 `->` 后面写的是这个 function 的 output。
-`\` 代表希腊字母 λ，也就是 lambda，见 [Wikipedia](https://en.wikipedia.org/wiki/Lambda)。
-所以，下面这两个 definitions 是等价的：
+使用：ghci (\x -> x * 2) 5
+
+ Lambda:
+ 
+形式是         `function名字 = \输入的变量 -> 输出`。
+
+返回自身 double 的 function ：  \x -> 2 * x
+
+                                ↑
+                                
+                              input为x
+
 ```haskell
 double :: Int -> Int
-double x = 2 * x
-
-double' :: Int -> Int
-double' = \x -> 2 * x
+double = \x -> 2 * x
 ```
-Lambda expressions 可以有**多个** input variables：
+**多个** input 变量：
 ```haskell
-mult :: Int -> Int -> Int
-mult x y = x * y
-
 mult' :: Int -> Int -> Int
 mult' = \x y -> x * y
 ```
-这里，第二种写法其实是下面这种写法的简写：
-```haskell
-mult'' :: Int -> (Int -> Int)
-mult'' = \x -> (\y -> x * y)
-```
-就像 pattern 可以忽略 input 的一部分一样，lambda expression 也可以忽略它的 input：
+pattern 可以忽略 input 的一部分，lambda expression 也可以
 ```haskell
 alwaysZero :: Bool -> Int
-alwaysZero = \_ -> 0
+alwaysZero = \_ -> 0  --无论input什么output都为0
 ```
 
-Lambda expressions 的一个重要用途是 **higher-order functions**，也就是 functions 可以作为 arguments 传给其他 functions。
-考虑：
+Lambda的一个重要用途是 **higher-order functions**
+
+functions 可以作为 arguments 传给其他 functions
+
+考虑：apply 接收一个 function 和一个 value，然后把这个 function 用在这个 value 上。
 ```haskell
 apply :: (a -> b) -> a -> b
 apply f x = f x
@@ -253,24 +251,44 @@ apply f x = f x
 ```hs
 > apply (\_ -> 5) 'r'
 5
-> apply (\ x -> if x < 0 then "Less than zero!" else "Greater or equal than zero!") (-3)
-"Less than zero!"
+--这里面input的f是将任何东西变成5，输入的a是'r'
+
+> apply (\ x -> if x < 0 then "小于零" else "大于等于0") (-3)
+--输入3放进输入的判断function中，输出：
+"小于0"
 ```
 
 
 ## Operators and sections
 
-关于 operators and sections，也有一个 [video](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=361993f2-6410-4be3-8f23-ac46017605da)。
+当一个 function 有两个 arguments，比如 `(:)`
 
-当一个 function 有两个 arguments，比如 `(:)`，我们可以把它写成 infix，也就是放在两个 arguments 中间。
-一个以 infix 方式使用的 function，也就是必须是 binary 的 function，叫做 **operator**。
-1. 任意 binary function 都可以通过加 backticks 变成一个 operator。比如 `div 7 2` 可以写成 ``7 `div` 2``。
-2. 反过来，任意 operator 也可以通过加 parentheses 变成 prefix 形式，比如 `(:) 1 [2,3]`。
+我们可以把它写成 infix，也就是放在两个 arguments 中间 1:[2,3]
+
+一个以 infix 方式使用的 function，也就是必须是 binary(两个参数的意思) 的 function，叫做 **operator**。
+
+比如div 10 2，div这个function就是operator
+
+1. binary function 通过加 `` 变成一个 运算符
+   比如 `div 7 2` 可以写成 ``7 `div` 2``。
+2. 反过来，任意 operator 也可以通过加（）变成 prefix 形式
+   比如`1:[2,3]`变成 `(:) 1 [2,3]`。
 
 每一个 operator `⊗`，如果它的 inputs 类型分别是 `a` 和 `b`，output 类型是 `c`，那么都可以产生三种 **sections**：
-1. `(⊗) :: a -> b -> c`。这里，`(⊗) = \x y -> x ⊗ y`。
-2. `(x ⊗) :: b -> c`，其中 `x :: a`。这里，`(x ⊗) = \y -> x ⊗ y`。
-3. `(⊗ y) :: a -> c`，其中 `y :: b`。这里，`(⊗ y) = \x -> x ⊗ y`。
+1. `(⊗) :: a -> b -> c`。
+   `(⊗) = \x y -> x ⊗ y`
+   
+3. `(x ⊗) :: b -> c`，其中 `x :: a`。
+   `(x ⊗) = \y -> x ⊗ y`
+   
+5. `(⊗ y) :: a -> c`，其中 `y :: b`。
+   `(⊗ y) = \x -> x ⊗ y`
+   
+一个例子看明白
+
+(>5) = \x -> x > 5
+
+(5>) = \y -> 5 > y
 
 Sections 可以用来简洁地定义 functions：
 ```haskell
@@ -280,9 +298,6 @@ square = (^2)
 reci :: Fractional a => a -> a
 reci = (1 /)
 ```
-Remarks:
-1. 一个 operator `⊗` 单独出现时，不是一个 valid Haskell expression：它必须作为 section 使用，比如 `(⊗)`。
-2. Sections 在写 higher-order functions 的时候很有用，这个会在后面的 lesson 里继续用到。
 
 
 ## Exercises
@@ -291,18 +306,46 @@ Remarks:
     1. `head` and `tail`
     2. list indexing `!!`
     3. pattern matching
-2. 定义一个 function `safetail :: [a] -> [a]`，它的行为和 tail 类似，但它会把 `[]` 映射到 `[]`，而不是抛出 error。使用 `tail` 和 `isEmpty :: [a] -> Bool`，
+```haskell
+third1 :: [a] -> a
+third1 xs = head(tail(tail xs))
+
+third2 :: [a] -> a
+third2 xs = xs !! 2
+
+third3 :: [a] -> a
+third3 (_:_:x:_)=x
+```
+2. 定义一个 function `safetail :: [a] -> [a]`，它的行为和 tail 类似,返回第一个elem之外的list
+   但它会把 `[]` 映射到 `[]`，而不是抛出 error
+   使用 `tail` 和 `isEmpty（其实就是null方程，换了个名而已） :: [a] -> Bool`，
    分别用下面三种方式定义 `safetail`：
+   -- 假设已经有：
+
+isEmpty :: [a] -> Bool
+
+isEmpty xs = null xs
+
    1. a conditional expression
    2. guarded equations
    3. pattern matching
+```haskell
+safetail1 :: [a] -> [a]
+safetail1 xs =if null xs then [] else tail xs
 
-## See also
-1. [Chapter 3, "Syntax in Functions" of "Learn You a Haskell"](/files/Resources/LearnYouaHaskell/LearnYouaHaskell.pdf)
-2. Haskell Wiki on [Sections](https://wiki.haskell.org/Section_of_an_infix_operator)
+safetail2 ::[a] ->[a]
+safetail2 xs
+	|null xs = []
+	|otherwise=tail xs
+
+safetail3 :: [a] -> [a]
+safetail3 [] = []
+safetail3 xs =tail xs
+--也可以 (_:xs) = xs
+```
 
 ## Summary
-1. 我们已经看到了几种定义 functions 的方式：composition, conditionals, guard equations, pattern matching, lambda expressions。
+1.  functions 的方式：composition, conditionals, guard equations, pattern matching, lambda expressions。
 2. 当 patterns 不是 exhaustive 的时候，只要没有任何 pattern 匹配成功，function 就会抛出 exception。为了避免这个问题，可以在最后加一个 catch-all `otherwise` pattern。
 3. 任意 pattern matching 都可以用 `case` expression 表达。
 4. Anonymous functions 可以用 lambda expressions 简洁地写出来。
