@@ -1,11 +1,8 @@
 # Functions in Haskell
 
-* Read also Chapter 4 of the text book "Programming in Haskell.
-
 ## Overview
 
-在这一课里，我们会学习 Haskell 里定义 functions 的几种不同方式。
-我们会学习下面这些方式：
+学习下面这些方式：
 
 1. Composition of existing functions
 2. Conditionals (`if _ then _ else _ `)
@@ -13,15 +10,20 @@
 4. Pattern matching
 5. Lambda expressions
 
-最后，我们还会看一下 **operators**，也就是像 `++` 这种 infix function symbols，以及怎么把它们变成普通 functions。
+学习 **++**，这种 infix怎么把它们变成普通 functions。
 
 
 ## Composing functions
-
-这一节的视频，包括 exercise 的讲解，在 [这里](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=fbf5d940-700b-46ab-aee2-ac3e016514bd)。
-
-我们可以把已有的 functions 组合起来，得到新的 functions。
+把已有的 functions 组合起来，得到新的 functions。
 比如：
+**tail**:去掉第一个元素之后剩下的 list。
+tail[1,2,3]--输出[2,3]
+
+**drop**：把前 n 个元素丢掉，返回剩下的 list。
+drop 2 [1, 2, 3, 4, 5]--输出[4,5]
+
+**take**:从 list 前面取出前 n 个元素
+take 3 [1,2,3,4,5]--输出[1,2,3]
 ```haskell
 removeLast :: [a] -> [a]
 removeLast xs = reverse (tail (reverse xs))
@@ -30,42 +32,38 @@ removeElem :: Int -> [a] -> [a]
 removeElem n xs = removeLast (take n xs) ++ drop n xs
 ```
 
-**Exercise:** 使用上面的 functions，写一个 function，把一个 list 的第一个和最后一个 element 都删掉。
-
+**Exercise:** 写function，把一个 list 的第一个和最后一个 element 都删掉。
+```
+function :: [a] ->[a]
+function xs = tail(reverse (tail (reverse xs)))
+```
 ## Conditionals
 
-Haskell 提供了 `if _ then _ else _`。它的 type 是 `Bool -> a -> a -> a`，而且是 polymorphic 的。
+ `if _ then _ else _`是 polymorphic
 ```haskell
 abs' :: Integer -> Integer
 abs' n = if n >= 0 then n else -n
 ```
-**Note:** `else` branch 是必须写的。
 
-我们可以嵌套使用 `if _ then _ else _`：
+可以嵌套使用 `if _ then _ else _`但不方便
 ```haskell
-howMuchDoYouLikeHaskell :: Int -> String
-howMuchDoYouLikeHaskell x = if x < 3 then "I dislike it!" else
+x = if x < 3 then "I dislike it!" else
                                if x < 7 then "It's ok!" else
                                  "It's fun!"
 ```
-不过这样写很难读；guarded equations，也就是下面会讲的写法，通常会更清楚。
-所以我们会尽量避免使用 conditionals。
-
-**Exercise:** 阅读 Haskell wiki 上关于 [`if _ then _ else _ ` 的讨论](https://wiki.haskell.org/If-then-else)。
-
 
 ## Guarded equations
 
-这一节的视频，包括 exercise 的讲解，在 [这里](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=b80a3cd6-5293-4d0b-8177-ac3e01692c24)。
-
-Guarded equations 是 `if _ then _ else _` expressions 的另一种写法。它们通常更容易读：
 ```haskell
 abs :: Int -> Int
 abs n | n >= 0    = n
       | otherwise = -n
 ```
-这里，`n >= 0` 和 `otherwise` 叫做 **guards**；它们都是 Booleans。
-这个 function 会返回第一个 evaluate 成 `True` 的 **guard** 后面的 value。
+这里，|后面的`n >= 0` 和 `otherwise` 叫做 **guards**；
+
+每个guard都是 Booleans，可判断TF
+
+function 会返回第一个为T的**guard** 后面的 value。
 
 Guarded equations 通常比 `if _ then _ else _` 更方便：
 ```haskell
@@ -75,18 +73,18 @@ howMuchDoYouLikeHaskell2 x | x < 3       = "I dislike it!"
                            | otherwise   = "It's fun!"
 ```
 
-**Exercise:** 使用 guarded equations，写一个 type 为 `Int -> Int -> Bool` 的 function。如果第一个 argument 大于第二个 argument，并且小于第二个 argument 的两倍，就返回 `True`。
-
-
 ## Pattern matching
 
-**Pattern matching** 的意思是：根据 input 是怎么构造出来的，来分析这个 input。
-Input 会依次和一组 patterns 进行匹配；第一个匹配成功的 pattern 会决定这个 function 的 output。
+input 是由哪些pattern构造出来的，把它们列出来
+
+Input 会依次和一组 patterns 进行匹配；
+
+第一个匹配成功的 pattern 会决定这个 function 的 output。
 
 ### Overview
+比如function **not** 的input是Bool
 
-Boolean value 只有两种可能：`True` 或 `False`。
-所以只要给这两种情况分别写 pattern 就够了：
+Bool，有两种pattern：`True` 或 `False`组成
 ```haskell
 notB :: Bool -> Bool
 notB False = True
@@ -108,114 +106,90 @@ isEmpty (x:xs) = False
 接下来我们会详细看这些情况。
 
 ### On Booleans
+and的input为两个Bool，每个Bool有两个pattern
 
-最简单的 patterns 之一，就是对 Booleans 进行匹配。
-
-如果 input 只有一个 Boolean，那么只有两种 patterns：
+那么and这个function就有 2^2 = 4 种 patterns：
 ```haskell
-notB' :: Bool -> Bool
-notB' False = True
-notB' True = False
+and :: Bool -> Bool -> Bool
+and True True = True
+and True False = False
+and False True = False
+and False False = False
 ```
-如果一个 function 接收两个 Booleans 作为 input，那么就有 2^2 = 4 种 patterns：
+但最后三个 patterns 可以合并。这里，wildcard pattern `_` 可以匹配任何东西
 ```haskell
-andB :: Bool -> Bool -> Bool
-andB True True = True
-andB True False = False
-andB False True = False
-andB False False = False
+and :: Bool -> Bool -> Bool
+and True True = True
+and _ _      = False --意思是无论_里面是什么，输出都是False
 ```
-最后三个 patterns 可以合并。这里，wildcard pattern `_` 可以匹配任何东西，并且会把它丢掉，也就是后面不再使用它：
+在下一个例子里，pattern `b`和上面的_一样 可以匹配任何东西。
+但_只能用在input里面
+而**我们可以在 `=` 右边使用 `b`**：
 ```haskell
-andB' :: Bool -> Bool -> Bool
-andB' True True = True
-andB' _ _      = False
-```
-这两个版本之间有一个区别：在后一个版本里，如果第一个 argument 是 `False`，那么第二个 argument 根本不需要被 evaluated，function 会立刻返回 `False`。
-
-在下一个例子里，pattern `b` 可以匹配任何东西。不过，和 `_` 不一样的是，**我们可以在 `=` 右边使用 `b`**：
-```haskell
-andB'' :: Bool -> Bool -> Bool
-andB'' True b  = b
-andB'' False _ = False
+and :: Bool -> Bool -> Bool
+and True b  = b
+and False _ = False
 ```
 
 **Exercise:** 写一个 function `orB :: Bool -> Bool -> Bool`，如果至少一个 argument 是 `True`，就返回 `True`。
+```haskell
+orB :: Bool -> Bool -> Bool
+orB True _ = True
+orB _ True = True
+orB _ _ = False  --Haskell 会从上到下依次匹配，不会直接跳到最后，
+                            上面的pattern匹配成功了都不用看这行
+```
 
-
-### Non-exhaustive patterns
+### Non-exhaustive（不完全覆盖） patterns
 
 考虑下面这个例子：
 ```haskell
 isTrue :: Bool -> Bool
 isTrue True = True
 ```
-**Question:** `isTrue False` 会 evaluate 成什么？
+ pattern 没有覆盖所有情况，所以 `isTrue False` 会抛出一个 exception：
 
-**Answer:** 这是一个 non-exhaustive pattern，也就是 pattern 没有覆盖所有情况，所以 `isTrue False` 会抛出一个 exception：
-```hs
-> isTrue False
-*** Exception: defining-functions.hs:36:1-18: Non-exhaustive patterns in function isTrue
-```
-我们也可以选择主动抛出一个 custom-made exception：
+我们也可以选择主动抛出一个exception：
 ```haskell
-isTrue' :: Bool -> Bool
-isTrue' True = True
 isTrue' False = error "not True"
 ```
-
-
 ### On tuples
+这个
+function 把 **tuple** 作为 input
 
-如果我们正在定义的 function 期待一个 **tuple** 作为 input，那么我们可以直接对 tuple 里的各个 components 做匹配：
+那么我们可以直接对 tuple 里的各个 components 做匹配：
 
-```haskell
-fst :: (a,b) -> a
-fst (x,y) = x
-```
-实际上，我们在这个 function 的 output 里没有用到 `y`，所以也可以写成 `fst (x,_) = x`。
-类似地：
-```haskell
-snd :: (a,b) -> b
-snd (_,y) = y
-```
-这个思路可以推广到有三个或更多 components 的 tuples：
 ```haskell
 third :: (a, b, c) -> c
 third (_, _, z) = z
 ```
-我们也可以同时匹配多个 tuples：
-```haskell
-addVectors :: (Num a) => (a, a) -> (a, a) -> (a, a)
-addVectors (x1, y1) (x2, y2) = (x1 + x2, y1 + y2)
-```
-
-**Exercise:** 写一个 function `swap :: (a, b) -> (b, a)`，交换一个 pair 里的两个 elements。
 
 ### On lists
 
-也可以看这个 [video](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=3eebebd8-9a8c-49ef-8a85-ac3f0003b4ee)。
 
-所有 lists 都是通过不断在已有 list 前面加 elements，也就是用 `(:)`，一步一步构造出来的，最开始是 empty list `[]`。
-这意味着 list `[1, 2, 3]` 可以看成是 `1:[2,3]` 得到的，等等。更完整地说，`[1, 2, 3]` 其实是 `1:(2:(3:[]))` 的简写。
-换句话说，`[a]` 里的每一个 list，要么是：
-1. empty list；或者
-2. 形如 `x:xs`，其中 `x :: a`，`xs :: [a]`。
+所有 lists 都是通过用 `(:)`，一步一步构造出来的，最开始是 empty list `[]`。
+`[1, 2, 3]` 其实是 `1:(2:(3:[]))`
+
+换句话说，`[a]` 里的每一个 list，只有两种case：
+1. []
+2. 形如 `x:xs`，其中
+
+   `x :: a`
+ 
+   `xs :: [a]`。
 
 ```haskell
-isEmpty' :: [a] -> Bool
-isEmpty' [] = True
-isEmpty' (x:xs) = False
+isEmpty :: [a] -> Bool
+isEmpty [] = True
+isEmpty (x:xs) = False --其实没有用到 `x` 和 `xs`
+变简单↓
+isEmpty (_:_)  = False
+          ↑
+    这个pattern外面的括号是必须的！
 ```
-在第二个 pattern 的 output 里，我们其实没有用到 `x` 或者 `xs`，所以这个 function 可以写得更简单：
-```haskell
-isEmpty'' :: [a] -> Bool
-isEmpty'' [] = True
-isEmpty'' (_:_) = False
-```
-注意，第二个 pattern 里的 `_:_` 外面的 parentheses 是必须的！
 
-我们也可以写更复杂的 list patterns。比如要返回一个 list 的第二个 element：
+
+aim: 返回一个 list 的第二个 element
 ```haskell
 sndElem :: [a] -> a
 sndElem (_:x:_) = x
