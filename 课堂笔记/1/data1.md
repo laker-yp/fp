@@ -492,38 +492,17 @@ week2work Fri = Fri'
 week2work Sat = Fri'
 week2work Sun = Fri'
 ```
-
-**Puzzle**. 考虑 function：
-```hs
-g :: Integer -> (Integer -> Bool)
-g y = \x -> x == y
-```
-我们可以用下面的 table 来 visualize `g`：
-
-|  | ... | -5 | -4 | ... | -1 | 0 | 1 | ... | 4 | 5 | ... |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| g(-5)= | ... | `True` | False | ... | False | False | False | ... | False | False | ... |
-| g(-4)= | ... | False | `True` | ... | False | False | False | ... | False | False | ... |
-| ... |
-| g(-1)= | ... | False | False | ... | `True` | False | False | ... | False | False | ... |
-| g(0)= | ... | False | False | ... | False | `True` | False | ... | False | False | ... |
-| g(1)= | ... | False | False | ... | False | False | `True` | ... | False | False | ... |
-| ... |
-| g(4)= | ... | False | False | ... | False | False | False | ... | `True` | False | ... |
-| g(5)= | ... | False | False | ... | False | False | False | ... | False | `True` | ... |
-
-也就是说，function `g` 把 integer `y` code 成一个 function `h`，其中 `h y = True`，而对于不等于 `y` 的其他 `x`，都有 `h x = False`。你可以自己说服自己，function `g` 是一个 injection。从这个意义上说，type `Integer` live inside function type `Integer -> Bool`。你觉得 `g` 有没有一个 companion `f : (Integer -> Bool) -> Integer`，可以把 functions `Integer -> Bool` “decode” 回 integers，并且对于 integer `y` 的任意 code `g y`，都有 `f (g y) = y`？如果有，请给出这样一个 `f` 的 Haskell definition，并说服自己确实对所有 integers `y` 都有 `f (g y) = y`。如果没有，为什么？这个 puzzle 相当 tricky，而且这个问题无论回答 "yes" 还是 "no"，都不是 obvious 的。
+这里有一个puzzle练习，我把它放最后了
 
 <a name="either"></a>
 # The `Either` type constructor
-
-接下来几个 sections 的 video 可以在 [Canvas](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=a2cf8bd9-109b-43d9-ae30-ac620091d8bc) 上看。
+一个 value 要么来自 type a，要么来自 type b
 
 它在 prelude 里定义如下：
 ```hs
 data Either a b = Left a | Right b
 ```
-然后我们有：
+数据构造器（构造type的方法）
 ```hs
     Left  :: a -> Either a b
     Right :: b -> Either a b
@@ -533,7 +512,9 @@ data Either a b = Left a | Right b
     Left 17     :: Either Integer String
     Right "abd" :: Either Integer String
 ```
-核心想法是：type `Either a b` 是 types `a` 和 `b` 的 *disjoint union*。我们在这个 union type 里用 `Left` 给 `a` 的 elements 打 tag，用 `Right` 给 `b` 的 elements 打 tag。下面会给出它的一个使用 example。
+核心想法是：Left 和 Right 是一个标签
+
+如用 `Right` 给 `b` 的 参数 打 tag
 
 <a name="and"></a>
 ## The `And` type constructor, defined by ourselves
@@ -1175,3 +1156,24 @@ Fork 3 (Fork 2 (Fork 1 Empty Empty) Empty) Empty
 **Very hard task:** 写一个 function `breadthFirstTree :: [a] -> [BT a]`，满足这个 property：对所有 `t :: BT a` 和 `xs :: [a]`，`elem t (breadthFirstTree xs)` 当且仅当 `treeBreadthFirst t = xs`。[solution](https://patternsinfp.wordpress.com/2015/03/05/breadth-first-traversal/))
 
 [1]: https://git.cs.bham.ac.uk/mhe/fp-learning-2021-2022/-/blob/master/Assignments/Formative2/README.md
+--------
+**Puzzle**. 考虑 function：
+```hs
+g :: Integer -> (Integer -> Bool)
+g y = \x -> x == y
+```
+我们可以用下面的 table 来 visualize `g`：
+
+|  | ... | -5 | -4 | ... | -1 | 0 | 1 | ... | 4 | 5 | ... |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| g(-5)= | ... | `True` | False | ... | False | False | False | ... | False | False | ... |
+| g(-4)= | ... | False | `True` | ... | False | False | False | ... | False | False | ... |
+| ... |
+| g(-1)= | ... | False | False | ... | `True` | False | False | ... | False | False | ... |
+| g(0)= | ... | False | False | ... | False | `True` | False | ... | False | False | ... |
+| g(1)= | ... | False | False | ... | False | False | `True` | ... | False | False | ... |
+| ... |
+| g(4)= | ... | False | False | ... | False | False | False | ... | `True` | False | ... |
+| g(5)= | ... | False | False | ... | False | False | False | ... | False | `True` | ... |
+
+也就是说，function `g` 把 integer `y` code 成一个 function `h`，其中 `h y = True`，而对于不等于 `y` 的其他 `x`，都有 `h x = False`。你可以自己说服自己，function `g` 是一个 injection。从这个意义上说，type `Integer` live inside function type `Integer -> Bool`。你觉得 `g` 有没有一个 companion `f : (Integer -> Bool) -> Integer`，可以把 functions `Integer -> Bool` “decode” 回 integers，并且对于 integer `y` 的任意 code `g y`，都有 `f (g y) = y`？如果有，请给出这样一个 `f` 的 Haskell definition，并说服自己确实对所有 integers `y` 都有 `f (g y) = y`。如果没有，为什么？这个 puzzle 相当 tricky，而且这个问题无论回答 "yes" 还是 "no"，都不是 obvious 的。
