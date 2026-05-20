@@ -1,7 +1,7 @@
 # User defined data types - part 1
 ## Contents
 
-* [Type synonyms](#typesynonyms)
+* [Type synonyms](#Type-synonyms)
 * [User defined data types](#datatypes)
   * [The booleans revisited](#booleans)
   * [Type isomorphisms](#typeisos)
