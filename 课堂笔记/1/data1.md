@@ -363,12 +363,12 @@ findPositions v (x:xs) n
 ```
 
 <a name="retracts"></a>
-## Type retracts
+# Type retracts
 
-# Bool是Int的retract
+## Bool是Int的retract
 
-# Bool能变int再回Bool
-# Int 变 Bool再回Int 就回不到原来的值了，只能输出0，1
+## Bool能变int再回Bool
+## Int 变 Bool再回Int 就回不到原来的值了，只能输出0，1
 
 如果，types `a` 和 `b` 的 isomorphism 是一对 functions：
 ```
@@ -437,9 +437,18 @@ g :: b -> a    Bool2Int
 
 **Task**. 证明 type `Maybe a` 是 type `[a]` 的一个 retract
 
-`Nothing` 对应 empty list `[]`，`Just x` 对应 one-element list `[x]`
+`Nothing` 对应 empty list `[]`
 
-你需要把这个想法精确定义出来：写出这两个 types 之间来回转换的 functions，从而展示 `Maybe a` 是 `[a]` 的 retract。我们采用的 textbook 经常利用这种 retraction，虽然没有明确说出来。实际上，book 经常避免使用 type `Maybe a`，而是使用 type `[a]`，只考虑 list `[]`（对应 `Nothing`）和 singleton lists `[x]`（对应 `Just x`），并忽略 length 为 `2` 或更大的 lists。原因是 book 想在 monads 被讲之前避免使用 monads，而使用 list comprehensions；在 list monad 这个特定 case 里，list comprehensions 刚好能完成和 monads 的 "do notation" 类似的事情。所以这里的 coding 是出于 pedagogical purposes。
+`Just x` 对应 one-element list `[x]`
+```
+toList :: Maybe a -> [a]
+toList Nothing  = []
+toList (Just x) = [x]
+
+fromList :: [a] -> Maybe a
+fromList []    = Nothing
+fromList (x:_) = Just x
+```
 
 如果我们有一个 type retraction `(f,g)`，如上所述，那么：
 
@@ -447,26 +456,42 @@ g :: b -> a    Bool2Int
 
     这意味着：对每个 `y :: b`，至少存在一个 `x :: a` 使得 `f x = y`。
 
-    例如，在 booleans 作为 integers 的 retract 的 case 里，这意味着每个 boolean 至少由一个 integer code。
-
+    例如，在 bool 作为 int 的 retract ，每个 boolean 至少由一个 integer code。
 
  * `g` 是一个 __injection__。
 
    这意味着：对每个 `x :: a`，最多存在一个 `y :: b` 使得 `g y = x`。
 
-   在 booleans 作为 integers 的 retract 的第一个 example 里，这是成立的：
+   在 booleans 作为 integers 的 retract 
     * 对于 `x = 0`，恰好有一个 `y` 满足 `bool2Int y = x`，也就是 `y=False`。
     * 对于 `x = 1`，恰好有一个 `y` 满足 `bool2Int y = x`，也就是 `y=True`。
     * 对于不同于 `0` 和 `1` 的 `x`，没有任何 `y` 满足 `bool2Int y = x`。
 
    所以对每个 `x`，最多只有一个这样的 `y`，也就是 exactly one or none。
 
-**Task**. 定义：
-```haskell
-data WorkingWeekDay = Mon' | Tue' | Wed' | Thu' | Fri'
+**Task**. 
+证明 type `WorkingWeekDay` 是 type `WeekDay` 的一个 retract
 ```
-我们给 names 加 primes，是因为没有 prime 的 names 已经被上面定义的 type `WeekDay` 的 elements 使用了。
-证明 type `WorkingWeekDay` 是 type `WeekDay` 的一个 retract。某个方向上需要做 arbitrary choices，就像 language `C` arbitrary 地决定所有不是 `0` 的 integer 都 codes `true` 一样。
+data WeekDay = Mon | Tue | Wed | Thu | Fri | Sat | Sun
+
+data WorkingWeekDay = Mon' | Tue' | Wed' | Thu' | Fri'
+
+work2week :: WorkingWeekDay -> WeekDay
+work2week Mon' = Mon
+work2week Tue' = Tue
+work2week Wed' = Wed
+work2week Thu' = Thu
+work2week Fri' = Fri
+
+week2work :: WeekDay -> WorkingWeekDay
+week2work Mon = Mon'
+week2work Tue = Tue'
+week2work Wed = Wed'
+week2work Thu = Thu'
+week2work Fri = Fri'
+week2work Sat = Fri'
+week2work Sun = Fri'
+```
 
 **Puzzle**. 考虑 function：
 ```hs
@@ -490,7 +515,7 @@ g y = \x -> x == y
 也就是说，function `g` 把 integer `y` code 成一个 function `h`，其中 `h y = True`，而对于不等于 `y` 的其他 `x`，都有 `h x = False`。你可以自己说服自己，function `g` 是一个 injection。从这个意义上说，type `Integer` live inside function type `Integer -> Bool`。你觉得 `g` 有没有一个 companion `f : (Integer -> Bool) -> Integer`，可以把 functions `Integer -> Bool` “decode” 回 integers，并且对于 integer `y` 的任意 code `g y`，都有 `f (g y) = y`？如果有，请给出这样一个 `f` 的 Haskell definition，并说服自己确实对所有 integers `y` 都有 `f (g y) = y`。如果没有，为什么？这个 puzzle 相当 tricky，而且这个问题无论回答 "yes" 还是 "no"，都不是 obvious 的。
 
 <a name="either"></a>
-## The `Either` type constructor
+# The `Either` type constructor
 
 接下来几个 sections 的 video 可以在 [Canvas](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=a2cf8bd9-109b-43d9-ae30-ac620091d8bc) 上看。
 
