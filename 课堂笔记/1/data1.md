@@ -1,7 +1,7 @@
 # User defined data types - part 1
 ## Contents
 
-* [Type synonyms](#Type-synonyms)
+* [Type synonyms](#Type-synonyms类型的别名) 直接点这里开始吧
 * [User defined data types](#datatypes)
   * [The booleans revisited](#booleans)
   * [Type isomorphisms](#typeisos)
@@ -72,28 +72,27 @@ import System.Random
 ```
 
 
-# Type synonyms
+# Type synonyms类型的别名
 
-接下来几个 sections 有一个对应的 video，可以在 [Canvas](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=98b350c3-ec60-47c4-b2fb-ac610127b135) 上看。
+给一个已经存在的 type 起一个新名字
 
-有时候，主要是为了让代码更清楚，我们会想给一个已经存在的 type 起一个新名字。
-比如，Haskell prelude 把 string 定义成 characters 的 list：
+比如string 被定义成 characters 的 list：
 ```hs
 type String = [Char]
 ```
-因为 `String` 只是一个 type synonym，所以像 list concatenation 和 reverse 这样的 operations：
+所以能用在char list的所有function都能用在string
 ```hs
-(++) :: [a] -> [a] -> [a]
-reverse :: [a] -> [a]
+> "abc" ++ ['d','e','f']
 ```
-都可以自由地用在 strings 上：
-```hs
-> "abc" ++ reverse "def"
-"abcfed"
-```
-Type synonyms 也可以有 parameters，比如：
+recall，type的形式可以有很多种，而且不一定只有一个单词
+
+比如Lst a也是一个type，表示Lst这个【类型构造器】可以带上一种a的类型
+
+比如：
 ```haskell
 type Lst a = [a]
+表示为给[a]这个类型取一个名字，叫做“Lst a”，其中a为构建这个type需要带上的参数
+
 ```
 
 <a name="datatypes"></a>
