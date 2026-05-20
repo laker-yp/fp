@@ -17,12 +17,6 @@
   * [Implementing some basic operations on lists](#listops)
   * [An aside on accumulators](#accum)
 
-* [Binary trees](#bintrees)
-  * [Basic functions on binary trees](#bintreefns)
-  * [Directions, addresses and paths in binary trees](#bintreeaddr)
-  * [Proofs on binary trees by induction](#bintreepf)
-  * [Traversals in binary trees](#traversals)
-  * [Inverting traversals (generating trees)](#gentree)
 
 <a name="typesynonyms"></a>
 
@@ -587,32 +581,38 @@ List 的两个数据构造器如下
     (:) :: a -> [a] -> [a]
 ```
 另一个版本version（只是为了学习）
+
+Nil = 空 list
 ```haskell
-data List a = Nil | Cons a (List a)
+data Mylist a = Nil | Cons a (List a)
 ```
-那么 constructors 的 types 是：
+数据构造器是：
 ```hs
    Nil  :: List a
    Cons :: a -> List a -> List a
 ```
-例如，native list `[1,2,3]` 在我们这个 isomorphic version 里写作 `Cons 1 (Cons 2 (Cons 3 Nil))`。我们来定义 isomorphism，让这件事更清楚：
-```haskell
-nativelist2ourlist :: [a] -> List a
-nativelist2ourlist []     = Nil
-nativelist2ourlist (x:xs) = Cons x (nativelist2ourlist xs)
+list `[1,2,3]` 在mylist里写作 `Cons 1 (Cons 2 (Cons 3 Nil))`
 
-ourlist2nativelist :: List a -> [a]
-ourlist2nativelist Nil         = []
-ourlist2nativelist (Cons x xs) = x:ourlist2nativelist xs
+通过定义 isomorphism，让这件事更清楚：
+```haskell
+list2mylist :: [a] -> List a
+list2mylist []     = Nil
+list2mylist (x:xs) = Cons x (list2mylist xs)
+
+mylist2list :: List a -> [a]
+mylist2list Nil         = []
+mylist2list (Cons x xs) = x:mylist2list xs
 ```
 注意，这些 coercions 是 recursively 定义的，这对应了 data type 本身也是 recursively 定义的这个事实。
 
 <a name="listops"></a>
 ## Implementing some basic operations on lists
 
-我们来写自己的 list concatenation，也就是 "append"，以及 reverse operations，它们在 prelude 里也有：
+有了mylist我们来写自己的就是 "append"，以及 reverse方程
 
 ```haskell
+data List a = Nil | Cons a (List a)    --为了方便理解，把Cons想成":"然后放在a和List a之间
+
 append :: List a -> List a -> List a
 append Nil         ys = ys
 append (Cons x xs) ys = Cons x (append xs ys)
@@ -621,41 +621,29 @@ rev :: List a -> List a
 rev Nil         = Nil
 rev (Cons x xs) = rev xs `append` (Cons x Nil)
 ```
+通过来下面的测色来看看是不是做对了。这里用到 `List a` 和 `[a]` 之间的 isomorphism。
 
-我们可以通过把它们和 Haskell prelude 里的 list concatenation 和 reversal implementations 比较，来 test 它们是不是做对了。这里用到 `List a` 和 `[a]` 之间的 isomorphism。
-也就是说，我们期待：
-```hs
-ourlist2nativelist (append (nativelist2ourlist xs) (nativelist2ourlist ys)) == xs ++ ys
-```
-以及：
-```hs
-ourlist2nativelist (rev (nativelist2ourlist xs)) == reverse xs
-```
-对所有 native lists `xs, ys :: [a]` 都 evaluate 成 `True`。
-我们来 test 这些 properties：
 ```hs
 > let xs = [1..5]
 > let ys = [6..10]
+
 > ourlist2nativelist (append (nativelist2ourlist xs) (nativelist2ourlist ys)) == xs ++ ys
 True
 > ourlist2nativelist (rev (nativelist2ourlist xs)) == reverse xs
-True
+True  --成功啦
 ```
-当然，这里我们只在几个 examples 上 test 了，但它在 general 情况下也是真的。（Question: 你会怎么 *prove* 这个？）
+问题是，rev和append都超级慢，要O(n方)，可以通过
+fastrev :: List a -> List a
 
-虽然我们的 definitions 在 functionally 上是 correct 的，但 `rev` 的 implementation 有一个更 subtle 的问题。
-通过检查代码可以看出，`append xs ys` 计算两个 lists 的 concatenation 需要 O(n) time，其中 n 是 `xs` 的 length，因为 `append` 的每次 recursive call 都让 `xs` 的 length 减少一，而且 `Cons` calls 是 constant time。
-另一方面，用同样的 argument，`rev` 是 O(n²)，因为 `rev` 的每次 recursive call 都让 `xs` 的 length 减少一，而每次 call `append` 都是 O(n)。
+fastrev xs = revapp xs Nil 来提升速度，【stack模拟】，详细的我省略了
 
-这不只是 theoretical problem。如果我们比较用 native `reverse` function 和上面实现的 `rev` 来 reverse 一个 reasonably large list，很快就会撞到这个问题：
 ```hs
 > let xs = [1..10^5]
-> length (reverse xs)  -- this is fast (we return the length of the reversed list in order to keep the output small)
+> length (reverse xs)  -- this is fast 
 100000
-> length (ourlist2nativelist (rev (nativelist2ourlist xs)))  -- this is really slow, so we give up and hit Control-C
-  C-c C-cInterrupted.
+> length (ourlist2nativelist (rev (nativelist2ourlist xs)))  -- this is really slow
 ```
-有一个更 efficient 的 reversal implementation，方法是引入一个带额外 argument 的 helper function：
+有一个更 efficient 的 reverse，方法是引入一个带额外参数的helper function：
 ```haskell
 fastrev :: List a -> List a
 fastrev xs = revapp xs Nil
@@ -664,9 +652,9 @@ fastrev xs = revapp xs Nil
     revapp (Cons x xs) ys = revapp xs (Cons x ys)
     revapp Nil         ys = ys
 ```
-理解 helper function `revapp` 的 second argument 的一种方式是：把它看成一个 stack，最开始设置为空，也就是 `Nil`。
-这个 function recursively scan 第一个 argument 的 input，把每个 element push 到 stack，也就是 second argument 上。
-当没有更多 input elements 时，stack 会直接被 popped 到 output，此时 original list 的所有 elements 都已经是 reverse order。
+-1 理解 `revapp` 的 第二个参数看成一个 stack，最开始设置为 `Nil`
+-2这个 function recursively scan 第一个 argument 的 input，把每个 element push 到 stack，也就是 second argument 上。
+-3当没有更多 input elements 时，stack 会直接被 popped 到 output，此时 original list 的所有 elements 都已经是 reverse order。
 
 下面是一个 concrete illustration，展开 `fastrev` 和 `revapp` 的 definitions，reverse 一个 four-element list：
 
@@ -691,7 +679,6 @@ fastrev xs = revapp xs Nil
 
 我们在 helper function `revapp` 里使用的 extra argument `ys` 有时叫做 "accumulator"，因为它 accumulates 一个最终会传到 output 的 value。
 上面我们看到 accumulator 可以把 list reversal 的 O(n²) algorithm 变成 O(n) algorithm。
-再看一个更明显的例子：计算 [Fibonacci numbers](https://en.wikipedia.org/wiki/Fibonacci_number) Fₙ。
 
 Wikipedia 里 Fibonacci sequence 的 mathematical definition 可以直接翻译成下面的 Haskell code：
 
@@ -765,389 +752,6 @@ static int fastfib(int n) {
 除了这种 low-level view，也就是 `fastfib` 和 `fibAcc` 到底在做什么之外，还有一个更 high-level view，就像之前 `revapp` 的 case 一样。
 你能不能找出一种意义，在这种意义下 helper function `fibAcc n x y` 计算的是比 `fib n` 更 *general* 的 function？
 
-<a name="bintrees"></a>
-# Binary trees
-
-接下来几个 sections 的 video 可以在 [Canvas](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=dbfdfb07-23e8-4b8b-a167-ac6200988381) 上看。
-
-
-Type `a` 上的 binary tree 要么是 empty，要么由一个被 type `a` 的 element 标记的 root 加上两个 binary trees 组成，这两个 trees 叫做 left subtree 和 right subtree：
-```hs
-data BT a = Empty | Fork a (BT a) (BT a)
-```
-* 我们有 empty tree，叫做 `Empty`。
-  我们约定 empty trees 画成 dangling leaves。
-  ```
-                              |
-  ```
-
-
-* 给定两个 trees `l` 和 `r`，以及一个 element `x::a`，我们有一个 new tree：
-  ```
-                              x
-                             / \
-                            /   \
-                           l     r
-  ```
-  写作 `Fork x l r`。
-
-例如，tree：
-```
-                             8
-                            / \
-                           /   \
-                          4     16
-                         / \   / \
-                        2        20
-                       / \      /  \
-```
-用这个 notation 写作：
-```haskell
-btexample = Fork 8 (Fork 4 (Fork 2 Empty Empty) Empty) (Fork 16 Empty (Fork 20 Empty Empty))
-```
-
-我们可以像前面一样让 Haskell 通过 deriving 帮我们做一些工作：
-
-```haskell
-data BT a = Empty
-          | Fork a (BT a) (BT a) deriving (Show, Read, Eq, Ord)
-```
-
-我们有：
-```hs
-   Empty :: BT a
-   Fork  :: a -> BT a -> BT a -> BT a
-```
-
-**Puzzle**. Automatically derived 的 `Show`、`Read` 和 `Eq` 做什么应该比较清楚。但是你觉得用 `Ord` derived 出来的 trees 上的 order 应该是什么？*Hint.* 这是一个 non-trivial question。所以先考察 lists 的 type。在 lists 的 case 里，automatically derived order 是 [lexicographic order](https://en.wikipedia.org/wiki/Lexicographic_order)，也就是类似 dictionary order。
-
-
-<a name="bintreefns"></a>
-## Basic functions on binary trees
-
-一开始，我们先 mirror trees。比如从上面的 tree 得到：
-```
-                             8
-                            / \
-                           /   \
-                          16    4
-                         / \   / \
-                        20        2
-                       / \       / \
-```
-做法如下：
-```haskell
-mirror :: BT a -> BT a
-mirror Empty = Empty
-mirror (Fork x l r) = Fork x (mirror r) (mirror l)
-```
-在上面的 example 上运行后得到：
-```hs
-    mirror btexample = Fork 8 (Fork 16 (Fork 20 Empty Empty) Empty) (Fork 4 Empty (Fork 2 Empty Empty))
-```
-这种 tree notation 不太适合 visualize trees，你也能看出来，但它很适合 computation。
-
-我们把 tree 的 *size* 定义成它的 nodes 总数：
-```haskell
-size :: BT a -> Integer
-size Empty        = 0
-size (Fork x l r) = 1 + size l + size r
-```
-因为我们考虑的是 binary trees，所以 size，也就是 nodes 的数量，也等于 leaves 的数量减一：
-```haskell
-leaves :: BT a -> Integer
-leaves Empty        = 1
-leaves (Fork x l r) = leaves l + leaves r
-```
-我们把 tree 的 *height* 定义成从 root 出发的 longest path 的 length，用 nodes 数量来衡量：
-```haskell
-height :: BT a -> Integer
-height Empty        = 0
-height (Fork x l r) = 1 + max (height l) (height r)
-```
-一个 balanced binary tree 的 height 大约是它 size 的 log；而一个非常 unbalanced 的 binary tree，比如：
-```
-                            20
-                           / \
-                          16
-                         / \
-                        8
-                       / \
-                      4
-                     / \
-                    2
-                   / \
-```
-```haskell
-btleft = Fork 20 (Fork 16 (Fork 8 (Fork 4 (Fork 2 Empty Empty) Empty) Empty) Empty) Empty
-```
-它的 height 大约等于它的 size。
-
-<a name="bintreeaddr"></a>
-## Directions, addresses and paths in binary trees
-
-接下来几个 sections 的 video 可以在 [Canvas](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=0904c115-0ad1-486c-945f-ac62009d2772) 上看。
-
-
-为了从 binary tree 里选出某个 subtree，我们会连续向 left 或 right 走，直到找到它。但可能给出了错误的 directions list，这里叫做 address，所以 output 需要使用 `Maybe` type：
-```haskell
-data Direction = L | R deriving (Show)
-type Address   = [Direction]
-
-subtree :: Address -> BT a -> Maybe(BT a)
-subtree []     t            = Just t
-subtree (_:_)  Empty        = Nothing
-subtree (L:ds) (Fork _ l _) = subtree ds l
-subtree (R:ds) (Fork _ _ r) = subtree ds r
-```
-沿用上面的 pattern，我们可以定义一个 function，检查一个 address 在给定 tree 里是否 valid：
-```haskell
-isValid :: Address -> BT a -> Bool
-isValid []     _            = True
-isValid (_:_)  Empty        = False
-isValid (L:ds) (Fork _ l _) = isValid ds l
-isValid (R:ds) (Fork _ _ r) = isValid ds r
-```
-所有 valid addresses for subtrees 的 list 可以这样计算：
-```haskell
-validAddresses :: BT a -> [Address]
-validAddresses Empty        = [[]]
-validAddresses (Fork _ l r) = [[]]
-                           ++ [L:ds | ds <- validAddresses l]
-                           ++ [R:ds | ds <- validAddresses r]
-```
-List comprehensions 总是可以被消除。在这个 example 中，它们会变成：
-```haskell
-validAddresses' :: BT a -> [Address]
-validAddresses' Empty        = [[]]
-validAddresses' (Fork _ l r) = [[]]
-                            ++ (map (L:) (validAddresses' l))
-                            ++ (map (R:) (validAddresses' r))
-```
-
-
-我们期待：
-```hs
-    isValid ds t = ds `elem` (validAddresses t)
-```
-或者用文字说，一个 address 是 valid，当且仅当它是 valid addresses list 的一个 element。这在 intuition 上应该清楚吗？Statement 本身是清楚的。但考虑到我们的 definitions，这个 fact 我觉得并不是直接 obvious 的。我会说它需要一个 convincing argument。无论如何，intuition 是我们基于学到的 convincing arguments 慢慢发展出来的。
-
-所有从 root 到 leaf 的 paths 的 list 也有类似的 definition：
-```haskell
-btpaths :: BT a -> [[a]]
-btpaths Empty        = [[]]
-btpaths (Fork x l r) = [x:xs | xs <- btpaths l]
-                    ++ [x:xs | xs <- btpaths r]
-```
-
-<a name="bintreepf"></a>
-## Proofs on binary trees by induction
-
-如果我们有一个关于 trees 的 property `P`，并且想证明对所有 trees `t`，`P(t)` 都成立，那么可以用 *induction on trees*：
-
-* 证明 `P(Empty)` 成立。
-* 证明如果对给定 trees `l` 和 `r`，`P(l)` 和 `P(r)` 都成立，那么对 arbitrary `x`，`P(Fork x l r)` 也成立。
-
-我们不会在这个 module 里特别强调 proofs，但当某些 claims 确实需要 proofs 时，我们会指出来。而且，我们会尽量精确地说明我们写的 programs 的 specifications。
-
-经常会有这种情况：别人给我们展示了一个 clever algorithm，而我们因为不理解它而觉得自己很笨。但这种感觉是错的。如果我们不理解一个 algorithm，缺少的是 proof。Proof 就是 explanation。这就是 proof 的意思。为了理解一个 algorithm，我们需要：
-
-  * algorithm 本身；
-  * 它 intended to do 的 precise description；
-  * 一个 convincing explanation，说明这个 algorithm 确实做到了它 intended to do 的事情。
-
-Programs alone 是不够的。我们需要知道它们 intended to accomplish 什么，也想知道一个 explanation 来 justify 它们完成了我们 promise 的事情。这个 promise 叫做 algorithm / program 的 *specification*。Program correctness 意味着 “the promise is fulfilled”。尝试证明 promise 被 fulfilled 的一种方式是 *test* program。但实际上，testing 能做的只是通过找到 counterexamples 来说明 promise *not* fulfilled。当好的 examples 工作时，我们有某种 evidence 说明 algorithm works，但不是 full confidence，因为我们可能漏掉了会产生 wrong outputs 的 inputs。Full confidence 只能来自 convincing explanation，也就是 *proof*。如果你曾经问过自己 "proof" 到底是什么意思，ultimate answer 就是 "convincing argument"。
-
-### Functional proofs
-
-Dependently typed language [Agda](http://wiki.portal.chalmers.se/agda/pmwiki.php) 允许我们写 functional programs 以及它们的 correctness proofs，其中 [proofs themselves are written as functional programs](https://en.wikipedia.org/wiki/Curry%E2%80%93Howard_correspondence)。
-例如，[这里有一个 computer-checked proof](http://www.cs.bham.ac.uk/~mhe/fp-learning-2017-2018/html/Agda-in-a-Hurry.html)，证明了上面 `isValid` 和 `validAddresses` 之间的 relation，在 Agda 里完成。
-这部分不 examinable，只是为了 illustration。
-
-<a name="traversals"></a>
-## Traversals in binary trees
-
-接下来几个 sections 的 video 可以在 [Canvas](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=e194464a-dc4d-4fd5-8e03-ac6200a0ae73) 上看。
-
-
-我们现在定义 standard in-order 和 pre-order [traversals](https://en.wikipedia.org/wiki/Tree_traversal)：
-```haskell
-treeInOrder :: BT a -> [a]
-treeInOrder Empty = []
-treeInOrder (Fork x l r) = treeInOrder l ++ [x] ++ treeInOrder r
-
-treePreOrder :: BT a -> [a]
-treePreOrder Empty = []
-treePreOrder (Fork x l r) = [x] ++ treePreOrder l ++ treePreOrder r
-```
-例如，对于上面考虑过的 tree `btexample`：
-```
-                             8
-                            / \
-     btexample =           /   \
-                          4     16
-                         / \   / \
-                        2        20
-                       / \      /  \
-```
-我们得到：
-```hs
-> (treeInOrder btexample, treePreOrder btexample)
-([2,4,8,16,20],[8,4,2,16,20])
-```
-而对于 `btleft`：
-```
-                            20
-                           / \
-                          16
-                         / \
-        btleft =        8
-                       / \
-                      4
-                     / \
-                    2
-                   / \
-```
-我们得到：
-```hs
-> (treeInOrder btleft, treePreOrder btleft)
-([2,4,8,16,20],[20,16,8,4,2])
-```
-
-[Breadth-first traversal](https://en.wikipedia.org/wiki/Breadth-first_search) 更 tricky。我们先定义一个 function，它接收一个 tree，然后产生一个 lists of lists：第一个 list 是 level zero 的 nodes，也就是 root；然后是 level one 的 nodes，也就是 root 的 successors；然后是 level two 的 nodes，以此类推：
-```haskell
-levels :: BT a -> [[a]]
-levels Empty        = []
-levels (Fork x l r) = [[x]] ++ zipappend (levels l) (levels r)
-  where
-    zipappend []       yss      = yss
-    zipappend xss      []       = xss
-    zipappend (xs:xss) (ys:yss) = (xs ++ ys) : zipappend xss yss
-```
-可以把 `zipappend` 和 prelude function [zipWith](https://hackage.haskell.org/package/base-4.12.0.0/docs/src/GHC.List.html#zipWith) 作比较。
-例如：
-```hs
-> levels btexample
-[[8],[4,16],[2,20]]
-> levels btleft
-[[20],[16],[8],[4],[2]]
-```
-有了这个，我们可以定义：
-```haskell
-treeBreadthFirst :: BT a -> [a]
-treeBreadthFirst = concat . levels
-```
-其中 `.` 表示 function composition，可以在 textbook 里查；prelude function `concat :: [[a]] -> [a]` 会 concatenate 一个 list of lists，比如从 `[[8],[4,16],[2,20]]` 得到 `[8,4,16,2,20]`。关于 breadth-first search 的进一步讨论，可以看 [The under-appreciated unfold](https://dl.acm.org/citation.cfm?doid=289423.289455)，free version 在 [authors' web page](http://www.cs.ox.ac.uk/jeremy.gibbons/publications/unfold.ps.gz)，但这大概率超出了你们目前大多数人的 level。
-
-<a name="gentree"></a>
-## Inverting traversals (generating trees)
-
-接下来几个 sections 的 video 可以在 [Canvas](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=e2c84108-de51-42ce-a42b-ac6200bcd280) 上看。
-
-很多不同的 trees 可以有相同的 in-order / pre-order / breadth-first traversal。上面我们已经看到了 `btexample` 和 `btleft`，它们有相同的 in-order traversal。
-换句话说，所有这些 functions：
-```hs
-treeInOrder, treePreOrder, treeBreadthFirst :: BT a -> [a]
-```
-都是 *non-injective*，因此 non-invertible。
-不过，一个有趣而且可以处理的问题是：尝试构造一个 binary tree，使它具有给定的 in-order / pre-order / breadth-first traversal；甚至可以尝试生成具有某个 traversal 的 *all possible binary trees*。
-
-例如，下面这个 function 会根据一个 in-order traversal 产生一个 *balanced* binary tree。如果 input 是 sorted 的，那么它会是一个 binary *search* tree：
-```haskell
-balancedTree :: [a] -> BT a
-balancedTree [] = Empty
-balancedTree xs = let (ys, x:zs) = splitAt (length xs `div` 2) xs in
-                  Fork x (balancedTree ys) (balancedTree zs)
-```
-Prelude function [`splitAt`](http://hackage.haskell.org/package/base-4.10.0.0/docs/Prelude.html#v:splitAt) 会在给定 position 把一个 list 分成两个 lists。
-这个 function 满足 equation：
-```hs
-    treeInOrder (balancedTree xs) = xs
-```
-对所有 `xs :: [a]` 都成立。
-反过来，下面这个肯定 **不** 成立：
-```hs
-    balancedTree (treeInOrder t) = t
-```
-并不是对所有 `t :: BT a` 都成立。例如：
-```hs
-balancedTree (treeInOrder btleft) = Fork 8 (Fork 4 (Fork 2 Empty Empty) Empty) (Fork 20 (Fork 16 Empty Empty) Empty)
-```
-它并不等于 `btleft`。
-事实上，composite function：
-```haskell
-balance :: BT a -> BT a
-balance = balancedTree . treeInOrder
-```
-也就是先把 `treeInOrder` 应用到 tree 上，再把 `balancedTree` 应用到 resulting list 上，可以看作一个 rebalancing binary tree 的 operation。
-
-现在，使用 list comprehensions，从上面的 `balancedTree` function 到一个生成具有给定 in-order traversal 的 *all* binary trees 的 function，只差很小一步：
-```haskell
-inOrderTree :: [a] -> [BT a]
-inOrderTree [] = [Empty]
-inOrderTree xs = [Fork x l r | i <- [0..length xs-1],
-                               let (ys, x:zs) = splitAt i xs,
-                               l <- inOrderTree ys, r <- inOrderTree zs]
-```
-它满足这个 property：
-```hs
-elem t (inOrderTree xs)
-```
-当且仅当：
-```hs
-treeInOrder t = xs
-```
-对所有 `t :: BT a` 和 `xs :: [a]` 都成立。
-例如，运行：
-```hs
-> inOrderTree [1..3]
-[Fork 1 Empty (Fork 2 Empty (Fork 3 Empty Empty)),Fork 1 Empty (Fork 3 (Fork 2 Empty Empty) Empty),Fork 2 (Fork 1 Empty Empty) (Fork 3 Empty Empty),Fork 3 (Fork 1 Empty (Fork 2 Empty Empty)) Empty,Fork 3 (Fork 2 (Fork 1 Empty Empty) Empty) Empty]
-```
-会成功计算出所有五个 in-order traversal 是 `[1,2,3]` 的 binary search trees：
-```
-   1
-  / \
-     2
-    / \
-       3
-      / \
-Fork 1 Empty (Fork 2 Empty (Fork 3 Empty Empty))
-
-   1
-  / \
-     3
-    / \
-   2
-  / \
-Fork 1 Empty (Fork 3 (Fork 2 Empty Empty) Empty)
-
-     2
-    / \
-   /   \
-  1     3
- / \   / \
-Fork 2 (Fork 1 Empty Empty) (Fork 3 Empty Empty)
-
-    3
-   / \
-  1
- / \
-    2
-   / \
-Fork 3 (Fork 1 Empty (Fork 2 Empty Empty)) Empty
-
-      3
-     / \
-    2
-   / \
-  1
- / \
-Fork 3 (Fork 2 (Fork 1 Empty Empty) Empty) Empty
-```
-
-**Task:** 写一个 function `preOrderTree :: [a] -> [BT a]`，满足这个 property：对所有 `t :: BT a` 和 `xs :: [a]`，`elem t (preOrderTree xs)` 当且仅当 `treePreOrder t = xs`。
-
-**Very hard task:** 写一个 function `breadthFirstTree :: [a] -> [BT a]`，满足这个 property：对所有 `t :: BT a` 和 `xs :: [a]`，`elem t (breadthFirstTree xs)` 当且仅当 `treeBreadthFirst t = xs`。[solution](https://patternsinfp.wordpress.com/2015/03/05/breadth-first-traversal/))
 
 [1]: https://git.cs.bham.ac.uk/mhe/fp-learning-2021-2022/-/blob/master/Assignments/Formative2/README.md
 --------
