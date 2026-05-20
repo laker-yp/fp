@@ -231,37 +231,44 @@ Mon
 > maxBound :: WeekDay
 Sun
 ```
+------------------------------------------------------------------
 <a name="logic"></a>
 # type constructors
 
 <a name="maybe"></a>
 ## The `Maybe` type constructor
 
-有时候一个 function 可能无法给出 result，在这种情况下，我们希望它明确说“我给不出结果”。为此，我们使用 prelude 里的 `Maybe` type：
+有时候一个 function 可能无法给出 result，我们希望它明确说“保持沉默”
 ```hs
 data Maybe a = Nothing | Just a
 ```
 这里 `a` 是一个 type parameter，`Nothing` 和 `Just` 有下面这些 types：
+
 ```hs
    Nothing :: Maybe a
-   Just    :: a -> Maybe a
 ```
-这意味着 constructor `Just` 是一个 function。它把 type `a` 的一个 element [converts](https://en.wikipedia.org/wiki/Type_conversion) 成 type `Maybe a` 的一个 element。所以这个 function `Just` 是所谓的 *type coercion*，也叫 *type cast*。
-
-例如：
+ `Nothing`是一个不带参数的构造器，本身技术
+ 
+```
+  Just    :: a -> Maybe a
+```
+ `Just` 这个构造器本质是一个 function。它把type为`a` 的参数构造成一个type为`Maybe a`的变量
+ 
+ 例如：
 ```hs
    Just 17 :: Maybe Integer
 ```
-总结一下，type `Maybe a` 唯一可能的 elements 是 `Nothing` 和 `Just x`，其中 `x` 的 type 是 `a`。
 
-在 Java 里，`Maybe` type constructor 叫做 `Optional`。
+## Maybe Example
 
-### Example: integer computations that may give errors
+### div 函数
 
-在下面这个 division definition 里，如果 denominator 是 zero，那么 division 不可能执行，所以 result 是 `Nothing`。如果 division 可以执行，我们就直接进行 division，并且用 type conversion function `Just` 把得到的 `Int` 转成 `Maybe Int`，这就给出了 function `dive` 的 result：
+如果 denominator分母 是 0，那么 result 是 `Nothing`
+
+如果 division 可以执行，我们就直接进行 division，并且用 type conversion function `Just` 把得到的 `Int` 转成 `Maybe Int`，这就给出了 function `dive` 的 result：
 ```haskell
-dive :: Int -> Int -> Maybe Int
-x `dive` y = if y == 0 then Nothing else Just (x `div` y)
+myDiv :: Int -> Int -> Maybe Int
+x `myDive` y = if 【y == 0】 then 【Nothing】 else 【Just (x `div` y)】
 ```
 例如：
 ```hs
@@ -270,17 +277,12 @@ Just 5
 > 10 `dive` 0
 Nothing
 ```
+### 让【maybe Int】也能被计算
+但现在假设你想做 ``3 + (10 `dive` 0)``。你可能期待得到 `Nothing`，但是输出为error
 
-但现在假设你想做 ``3 + (10 `dive` 0)``。你可能期待得到 `Nothing`，但这个 expression 甚至无法 type check：
-```hs
-> 3 + (10 `dive` 0)
+因为`+` 需要它右边的参数是 `Int`而我们写的是``(10 `div` 0)`` 是一个 `Maybe Int`
 
-<interactive>:11:1: error:
-    • No instance for (Num (Maybe Int)) arising from a use of ‘+’
-    • In the expression: 3 + (5 `dive` 0)
-      In an equation for ‘it’: it = 3 + (5 `dive` 0)
-```
-这句话的意思是：``(10 `div` 0)`` 被期待是一个 `Int`，因为 `+` 需要它右边的 argument 是 `Int`，但它并不是。它其实是一个 `Maybe Int`。所以我们需要一个能处理 error 作为 possible inputs 的 addition 版本：
+那我们就自己写一个+来让maybe a这个type也能被运算
 
 ```haskell
 adde :: Maybe Int -> Maybe Int -> Maybe Int
@@ -289,26 +291,20 @@ adde Nothing  (Just y) = Nothing
 adde (Just x) Nothing  = Nothing
 adde (Just x) (Just y) = Just (x + y)
 ```
-现在为了修复 ``3 + (5 `dive` 0)``，我们把 `+` 替换成 `adde`，但同时还需要用 *type coercion* 或 *type cast* `Just` 把 number `3` 转换成 type `Maybe Int`。
+简洁↓
+```haskell
+adde :: Maybe Int -> Maybe Int -> Maybe Int
+adde (Just x) (Just y) = Just (x+y)
+adde _       _         = Nothing
+```
+试一下↓
 ```hs
 > Just 3 `adde` (10 `dive` 2)
 Just 8
 > Just 3 `adde` (10 `dive` 0)
 Nothing
 ```
-
-
-`adde` 的更简洁 definition：
-
-```haskell
-adde' :: Maybe Int -> Maybe Int -> Maybe Int
-adde' (Just x) (Just y) = Just (x+y)
-adde' _       _         = Nothing
-```
-这个写法可以工作，是因为 Haskell programs 执行时会从上到下尝试 patterns，而最后一个 pattern 会 catch 所有剩下的 possibilities。
-
-也可以使用 `case` 来定义：
-
+用 `case` 来定义：
 ```haskell
 adde'' :: Maybe Int -> Maybe Int -> Maybe Int
 adde'' xm ym = case xm of
@@ -320,71 +316,59 @@ adde'' xm ym = case xm of
 
 之后我们会看到一种更简洁的方式，用 *monads* 来写这种 definitions。但现在我们先继续使用 pattern matching 和 cases。
 
-### Example: find the first position an element occurs in a list
+### Example: 找出a在[a]中出现的第一个位置
 
-如果某个 element 不在 list 里，那么 first position 就是 undefined，所以这种情况下我们回答 `Nothing`：
 ```haskell
 firstPosition :: Eq a => a -> [a] -> Maybe Int
-firstPosition x []     = Nothing
-firstPosition x (y:ys)
-           | x == y    = Just 0
-           | otherwise = case firstPosition x ys of
+firstPosition v []     = Nothing
+firstPosition v (x:xs)
+           | v == x    = Just 0
+           | otherwise = case firstPosition v xs of
                            Nothing -> Nothing
                            Just n  -> Just (n+1)
+
+->的意思是:表示“匹配到这个 pattern，就返回这个结果”
 ```
 例如：
 ```hd
-> firstPosition 'a' ['a'..'z']
-Just 0
-> firstPosition 'b' ['a'..'z']
-Just 1
-> firstPosition 'z' ['a'..'z']
-Just 25
+> firstPosition 'c' ['a'..'z']
+Just 2
 > firstPosition '!' ['a'..'z']
 Nothing
 ```
-我们可以总结为：
-```hs
-    firstPosition 'a' ['a'..'z'] = Just 0
-    firstPosition 'b' ['a'..'z'] = Just 1
-    firstPosition 'z' ['a'..'z'] = Just 25
-    firstPosition '!' ['a'..'z'] = Nothing
-```
-`firstPosition` 的 precise specification 是：如果 `firstPosition x ys = Just n`，那么 `ys !! n = x`；如果 `firstPosition x ys = Nothing`，那么对 list `[0..length ys-1]` 里的所有 `i`，都有 `ys !! i ≠ x`。我们实际上可以用这个 specification 来 test 我们的 implementation 是否 correct：
+检查某元素v是否在list里面
 ```haskell
 testFirstPosition :: Eq a => a -> [a] -> Bool
-testFirstPosition x ys =  case firstPosition x ys of
-                           Nothing -> and [ ys !! i /= x | i <- [0 .. length ys - 1]]
-                           Just n  -> ys !! n == x
+testFirstPosition v xs =  case firstPosition v xs of
+                           Nothing -> and [ xs !! i /= v | i <- [0 .. length xs - 1]]
+                           Just n  -> xs !! n == v
 ```
-下面是一些 tests：
 ```hs
-> testFirstPosition 'a' ['a'..'z']
-True
-> testFirstPosition 'b' ['a'..'z']
-True
-> testFirstPosition 'z' ['a'..'z']
-True
-> testFirstPosition '!' ['a'..'z']
+> testFirstPosition 'w' ['a'..'z']
 True
 ```
-所有 tests 都成功了，所以我们对 implementation 的 correctness 有了一些 confidence。当然，不可能通过 testing 所有 cases 来证明 correctness，因为 cases 是无限多的。
+*Task*. 定义`allPositions :: Eq a => a -> [a] -> [Int]`，找出一个 element 在 list 中出现的所有index
 
-你需要自己用 book 查清楚 `case` 是什么，以及它一般怎么工作，但在这个 example 里应该比较清楚。你也需要用 book 查清楚 conditional definitions 中用 `|` 表示 *guards* 的写法。
+`allPositions 7 [111,7,7,666] = [1,2]`
 
-我们会经常使用 `Maybe` type constructor，因为有很多场景下某些 inputs 是 *invalid* 的。
+```
+allPositions :: Eq a => a -> [a] -> [Int]
+allPositions v xs = findPositions v xs 0
 
-*Task*. 定义一个 function `allPositions :: Eq a => a -> [a] -> [Int]`，找出一个 element 在 list 中出现的所有 positions。
-例如，我们应该有 `allPositions 17 [13,17,17,666] = [1,2]`，以及 `allPositions 17 [1,2,3] = []`。
+findPositions :: Eq a => a -> [a] -> Int -> [Int]
+findPositions v [] n = []
+findPositions v (x:xs) n
+  | v == x    = n : findPositions v xs (n+1)
+  | otherwise = findPositions v xs (n+1)
+```
 
 <a name="retracts"></a>
 ## Type retracts
 
-讨论这一 section 的 [video](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=c78bfae6-79d6-4a09-bc70-ac6200c363c9) 可以看这里。
 
-以你目前的 level 来说，这一节可能相当 hard。可以把它当作一个 challenge。如果你迷路了，第一次阅读时可以先 skip，去看下一节，之后再回来。这一节很重要，因为它处理的是 data coding，而这是 Computer Science 里非常关键的 aspect。我们这里用 Haskell 来讲，但实际上它适用于任何 programming language。
+以你目前的 level 来说，这一节可能相当 hard,也相当重要
 
-我们已经见过 type *isomorphisms* 的 examples。例如，type `Bool` 和 black-and-white colours 的 type `BW` 是 isomorphic 的，也和 binary digits `Zero` 和 `One` 的 type `Bit` isomorphic。
+我们已经见过 type *isomorphisms同构* 如BW和Bool和ZeroOne
 
 更一般地，types `a` 和 `b` 的 isomorphism 是一对 functions：
 ```
