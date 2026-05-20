@@ -498,6 +498,12 @@ week2work Sun = Fri'
 # The `Either` type constructor
 一个 value 要么来自 type a，要么来自 type b
 
+Either 最常见的实际用途就是：
+
+表示一个结果可能成功，也可能失败，而且失败时可以带错误信息，不像nothing，失败了只显示Nothing
+
+所以我理解为Either就相当于Maybe改版，同样是二选一不过把nothing给改成了一个具体的输出
+
 它在 prelude 里定义如下：
 ```hs
 data Either a b = Left a | Right b
@@ -512,18 +518,26 @@ data Either a b = Left a | Right b
     Left 17     :: Either Integer String
     Right "abd" :: Either Integer String
 ```
-核心想法是：Left 和 Right 是一个标签
-
-如用 `Right` 给 `b` 的 参数 打 tag
+## Either具体例子
+```
+Div :: Int -> Int -> 【Either String Int】
+Div x 0 = Left "c n m"
+Div x y = Right (x `div` y)
+```
+核心想法是：Left 和 Right 是一个标签，通过这个可以理解*Maybe a*的Maybe也只是一个标签
 
 <a name="and"></a>
-## The `And` type constructor, defined by ourselves
+# `And` type constructor, 自定义
+
+其实就是pair, (a,b)
 
 下面这个东西有一个 isomorphic version 已经在 language 里预定义好了，我们很快会看到：
 ```haskell
 data And a b = Both a b
 ```
-这是一个有两个 parameters 的 type constructor，并且有一个 element constructor `Both`。`Both` 是一个 function：
+`And`是一个有*两个参数*的 类型构造器
+
+`Both` 是一个数据构造器，也是一个function：
 ```hs
    Both :: a -> b -> And a b
 ```
@@ -538,29 +552,13 @@ data Drink = Tea | Coffee | Beer
 ```haskell
 type SaverMenu = Either (And MainDish Dessert) (And MainDish Drink)
 ```
-它也可以等价地写成：
-```hs
-type SaverMenu = Either (MainDish `And` Dessert) (MainDish `And` Drink)
-```
-你可以选择自己更喜欢的 definition form。Haskell 两种都接受。
+当然，And a b 等价于 a `And` b
 
-所以 saver menu 里可选的是：要么 main dish 加 dessert，要么 main dish 加 drink。直觉上，这显然和下面这个 type isomorphic：
+isomorphic：
 ```haskell
 type SaverMenu' = And MainDish (Either Dessert Drink)
 ```
-意思是：你有一个 main dish，并且 dessert 或 drink 二选一。这个直觉可以通过下面的 isomorphism 精确表达：
-```haskell
-prime :: SaverMenu -> SaverMenu'
-prime (Left (Both m d)) = Both m (Left  d)
-prime (Right(Both m d)) = Both m (Right d)
-
-unprime :: SaverMenu' -> SaverMenu
-unprime (Both m (Left  d)) = Left (Both m d)
-unprime (Both m (Right d)) = Right(Both m d)
-```
-所以，作为 software developer，你可以选择 `SaverMenu` 作为 implementation，也可以选择 `SaverMenu'`。它们不同，但本质上 equivalent。
-
-我们其实不需要自己定义 `And`，因为 Haskell 里已经有一个 equivalent type constructor，也就是 pairs 的 type。我们有下面这个 isomorphism：
+其实根本不需要定义and，pair就是它的 isomorphism：
 ```haskell
 and2pair :: And a b -> (a,b)
 and2pair (Both x y) = (x,y)
@@ -568,31 +566,27 @@ and2pair (Both x y) = (x,y)
 pair2and :: (a,b) -> And a b
 pair2and (x,y) = Both x y
 ```
-所以 saver menu type 还有更多 isomorphic versions：
-```haskell
-type SaverMenu''  = Either (MainDish, Dessert) (MainDish, Drink)
-type SaverMenu''' = (MainDish, Either Dessert Drink)
-```
-去 book 里查一下 pairs，也就是 tuple types 的 type，并阅读相关内容。
+所以下面这个版本的也是完全一样的：
+
+(And MainDish Dessert)等价于(MainDish , Dessert)
 
 <a name="lists"></a>
 # Lists revisited
 
-接下来几个 sections 的 video 可以在 [Canvas](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=985bb5d7-a2a2-4511-a6fb-ac620095003d) 上看。
-
-稍微不严格地说，lists 的 type 可以看作是这样预定义的：
+lists 的 type 可以看作是这样定义的（单纯为了学习）
 ```hs
-data [a] = [] | a : [a]  -- not quite a Haskell definition
+data [a] = [] | a : [a] 
 ```
-它的意思是：一个 `a` 的 list 要么是 empty，要么是一个 type `a` 的 element 后面跟着一个 `a` 的 list，中间用 `:` 表示。
-这是一个 *recursive* data type definition 的例子。List constructors 的 types 如下：
+`a` 的 list 要么是 empty，要么是一个 `a` : `a` 的 list
+
+这是一个 *recursive* data type definition 的例子
+
+List 的两个数据构造器如下
 ```hs
     []  :: [a]
     (:) :: a -> [a] -> [a]
 ```
-
-虽然上面这个 not-quite-a-Haskell-definition 在 semantics 上是正确的，但在 syntax 上是错的，因为 Haskell 很遗憾不接受这种 syntactical definition。
-如果我们不关心 syntax，可以定义一个 isomorphic version：
+另一个版本version（只是为了学习）
 ```haskell
 data List a = Nil | Cons a (List a)
 ```
