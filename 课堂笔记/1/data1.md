@@ -2,12 +2,12 @@
 ## Contents
 
 * [Type synonyms](#Type-synonyms类型的别名) 直接点这里开始吧
-* [User defined data types](#datatypes)
-  * [The booleans revisited](#booleans)
-  * [Type isomorphisms](#typeisos)
-  * [Weekdays](#weekdays)
+* [自定义data type](#datatypes)
+  * [Bool type的复习](#booleans)
+  * [Type isomorphisms同构](#typeisos)
+  * [Weekdays例子](#weekdays)
 
-* [Some important type constructors](#logic)
+* [type constructors](#logic)
   * [The `Maybe` type constructor](#maybe)
   * [Type retracts](#retracts)
   * [The `Either` type constructor](#either)
@@ -84,13 +84,14 @@ type String = [Char]
 ```hs
 > "abc" ++ ['d','e','f']
 ```
-recall，type的形式可以有很多种，而且不一定只有一个单词
+type的形式可以有很多种，而且不一定像Int那样只有一个单词组成
 
 比如Lst a也是一个type，表示Lst这个【类型构造器】可以带上一种a的类型
 
 比如：
 ```haskell
 type Lst a = [a]
+
 表示为给[a]这个类型取一个名字，叫做“Lst a”，其中a为构建这个type需要带上的参数
 
 ```
@@ -101,17 +102,18 @@ type Lst a = [a]
 <a name="booleans"></a>
 ## The booleans revisited
 
-Booleans 在 Haskell 的 prelude 里是这样定义的：
+## 不带参数的type
 ```hs
 data Bool = False | True
 ```
-这定义了一个新的 type，叫做 `Bool`，它有两个 elements，也可以叫 *constructors*，分别叫 `False` 和 `True`：
+这定义了一个 type，叫做 `Bool`，它有两个 elements( *constructor，准确来说是数据构造器*)，分别叫 `False` 和 `True`：
 ```hs
+所以和两个elem（数据构造器）的类型都是Bool
    False :: Bool
    True  :: Bool
 ```
 一个 data type 上的 functions 可以很方便地通过对它的 constructors 做 **pattern-matching** 来定义。
-比如，在 prelude 里，conjunction operation：
+比如，在 Haskell 里，&&：
 ```hs
 (&&) :: Bool -> Bool -> Bool
 ```
@@ -122,39 +124,36 @@ True  && x = x
 ```
 Haskell 里 pattern-matching 的 semantics 有一个稍微 subtle 的地方：
 
-1. 不同的 pattern-matching clauses 会从上到下依次尝试。
-2. Function 的 input arguments 只会被 evaluated 到“足够判断它们是否匹配当前 pattern”的程度。
+1. 不同的pattern-matching会从*上到下*依次尝试。
+2. 看 input 能不能和这一行左边的 pattern 匹配
+3. 甚至不会看后面任何pattern
 
-这个 semantics 的一个结果是：上面对 conjunction 的 definition 实现了 [short-circuit evaluation](https://en.wikipedia.org/wiki/Short-circuit_evaluation)。如果第一个 argument 是 `False`，那么 function 会直接返回 `False`，甚至不会 evaluate 第二个 argument。
+第二个问题【short-circuit】，input匹配成功后，如匹配到False && _ = False
 
-相比之下，考虑下面这个 conjunction 的 alternative definition：
+那么Haskell在看到参数False的时候就直接输出结果False了，根本在乎_里面是什么，符不符合方法中要求的type
+
+下面这个 && 不管第一个 argument 是什么，第二个 argument 都会被 evaluated
 ```haskell
-conj :: Bool -> Bool -> Bool
-conj False False = False
-conj False True  = False
-conj True  False = False
-conj True  True  = True
-```
-这个版本 *不会* 实现 short-circuit evaluation：不管第一个 argument 是什么，第二个 argument 都会被 evaluated。
-我们可以在 GHC interpreter 里运行下面这个 experiment，观察这两个版本的区别：
-```hs
-> False && undefined
-False
-> False `conj` undefined
-*** Exception: Prelude.undefined
-#CallStack (from HasCallStack):
-  error, called at libraries/base/GHC/Err.hs:79:14 in base:GHC.Err
-  undefined, called at <interactive>:28:11 in interactive:Ghci5
+&& :: Bool -> Bool -> Bool
+&& False False = False
+&& False True  = False
+&& True  False = False
+&& True  True  = True
 ```
 
 <a name="typeisos"></a>
-## Type isomorphisms
+## Type isomorphisms同构
 
 我们引入另一个 data type `BW`：
 ```haskell
-data BW = Black | White
+data BW   = Black | White
 ```
-这个 type 和 `Bool` 是 *isomorphic* 的，也就是可以通过下面这两个 type-conversion functions 互相转换：
+这个 type 和 `Bool` 是 *isomorphic* 的
+```haskell
+data Bool = True | False
+```
+
+可以通过下面这两个 functions 互相转换：
 ```haskell
 bw2bool :: BW -> Bool
 bw2bool Black = False
@@ -174,131 +173,66 @@ bool2bw True  = White
 ```
 对所有 `c :: BW` 都成立。
 
-Type isomorphisms 不要和 type synonyms 混淆。
-比如，如果我们在需要 `Bool` value 的地方直接使用一个 `BW` value，就会得到 type error：
-```hs
-> let test = Black && True
+Tips:Type 同构 不要和 type 同名 混淆。
 
-<interactive>:39:1: error:
-    • Couldn't match expected type ‘Bool’ with actual type ‘BW’
-    • In the first argument of ‘(&&)’, namely ‘Black’
-      In the expression: Black && True
-      In an equation for ‘it’: it = Black && True
-```
-另一方面，如果我们用 explicit coercions `bw2bool` 和 `bool2bw` 把 values 包起来，那么 type checking 就没问题：
-```hs
-> let test = bool2bw (bw2bool Black && True)
-```
+某方法要求 `Bool` 那就不能用`BW` 的value
 
-当然，`Black` 和 `White` 这些 names 是 arbitrary 的。`BW` 和 `Bool` 之间还有另一个 isomorphism，可以把 `Black` 对应到 `True`，把 `White` 对应到 `False`：
-```haskell
-bw2bool' :: BW -> Bool
-bw2bool' Black = True
-bw2bool' White = False
+Black && True 是错的
 
-bool2bw' :: Bool -> BW
-bool2bw' False = White
-bool2bw' True  = Black
-```
-而且 `Bool` 和 `BW` 这两个 types 当然也都和下面这个 type isomorphic，而且每个方向也都有两种不同方式：
+bw2bool Black && True 才可以
+
+当然，`Black` 和 `White` 这些 names 是 arbitrary 的所以不一定Black就是F
+
+ `Bool` 和 `BW` 也和下面这个type isomorphic
 ```haskell
 data Bit = Zero | One
 ```
-这个 type 表示 binary digits。下面是其中一个 isomorphism：
-```haskell
-bit2Bool :: Bit  -> Bool
-bool2Bit :: Bool -> Bit
 
-bit2Bool Zero  = False
-bit2Bool One   = True
-
-bool2Bit False = Zero
-bool2Bit True  = One
-
-```
-另一个 isomorphism 如下：
-```haskell
-bit2Bool' :: Bit  -> Bool
-bool2Bit' :: Bool -> Bit
-
-bit2Bool' Zero  = True
-bit2Bool' One   = False
-
-bool2Bit' False = One
-bool2Bit' True  = Zero
-```
-
-> **Note:** Haskell 的 syntax rules 要求 type names，比如这里的 `Bool`、`BW`、`Bit`，以及 constructor names，比如这里的 `False`、`True`、`Black`、`White`、`Zero`、`One`，都必须以 capital letter 开头。
+> **Note:** type的name必须大写
 
 <a name="weekdays"></a>
 ## Weekdays
 
 另一个 data type 的例子是：
-```hs
-data WeekDay = Mon | Tue | Wed | Thu | Fri | Sat | Sun
-```
-
-我们可以让 Haskell 免费帮我们做一些工作。也有一些 alternative ways 可以自己通过 type class instances 手写这些功能，后面会讨论：
-
 ```haskell
 data WeekDay = Mon | Tue | Wed | Thu | Fri | Sat | Sun
                deriving (Show, Read, Eq, Ord, Enum, Bounded)
 ```
-这会自动把 type `WeekDay` 加入这六个 type classes，并且给出对应的 functions：
+这会自动把 type `WeekDay` 加入这六个 type classes
+
+并且给出对应的 这些类型类所支持的operation(functions)：
 ```hs
-   show :: WeekDay -> String
-   read :: String -> WeekDay
+   show :: WeekDay -> String  --toString
+   read :: String -> WeekDay  --与toString相反
    (==) :: WeekDay -> WeekDay -> Bool
    (<), (>), (<=), (>=) :: WeekDay -> WeekDay -> Bool
    succ, pred :: WeekDay -> WeekDay
    minBound, maxBound :: Weekday
 ```
-你可以在我们采用的 textbook 里查这些内容。注意，`show` 对应 Java 里的 `toString`，而 `read` 做的是相反的事情。
 一些 examples：
 ```hs
 > show Tue
 "Tue"
-> read "Tue" :: WeekDay  -- (the type annotation tells Haskell to try to parse the string as a WeekDay)
+> read "Tue" :: WeekDay
 Tue
-> read "Dog" :: WeekDay
-*** Exception: Prelude.read: no parse
-> Mon == Tue
-False
 > Mon < Tue
 True
 > succ Mon
 Tue
-> pred Tue
-Mon
 > [Mon .. Fri]
 [Mon,Tue,Wed,Thu,Fri]
 ```
-Monday 没有 predecessor，Sunday 没有 successor：
+Monday 没有 pred，Sunday 没有 succ
 
-```hs
-> pred Mon
-*** Exception: pred{WeekDay}: tried to take `pred' of first tag in enumeration
-CallStack (from HasCallStack):
-  error, called at Data1.hs:20:47 in main:Main
-> succ Sun
-*** Exception: succ{WeekDay}: tried to take `succ' of last tag in enumeration
-CallStack (from HasCallStack):
-  error, called at Data1.hs:20:47 in main:Main
-```
-最后，我们有：
+更多：
 ```
 > minBound :: WeekDay
 Mon
 > maxBound :: WeekDay
 Sun
 ```
-注意，weekdays 这个 type 里 names 的选择是 arbitrary 的。下面这个 isomorphic definition 也一样可以：
-```haskell
-data WeekDay' = Monday | Tuesday | Wednesday | Thursday | Friday | Saturday | Sunday
-```
-
 <a name="logic"></a>
-# Some important type constructors
+# type constructors
 
 <a name="maybe"></a>
 ## The `Maybe` type constructor
