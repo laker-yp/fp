@@ -4,13 +4,13 @@
 
 [方程](1/方程Function.md)
 
-[类型类1Eq和instance](1/类型类1 (Eq与instances).md)
+[类型类1-Eq和instance](1/类型类1.md)
 
-[类型类2[Ord和Num]](1/类型类2 (Ord,Num).md)
+[类型类2-Ord和Num](1/类型类2.md)
 
 [类型类3[自定义]](1/类型类3.md)
 
-[列表推导[x|x<-..]](1/列表推导式List Comprehensions.md)
+[列表推导[x|x<-..]](1/列表推导式.md)
 
 [递归](1/递归.md)
 
