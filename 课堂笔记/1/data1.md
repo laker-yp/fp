@@ -8,10 +8,10 @@
   * [Weekdays例子](#weekdays)
 
 * [type constructors](#logic)
-  * [The `Maybe` type constructor](#maybe)
-  * [Type retracts](#retracts)
-  * [The `Either` type constructor](#either)
-  * [The `And` type constructor, defined by ourselves](#and)
+  * [ `Maybe` ](#maybe)
+  * [retracts](#retracts)
+  * [ `Either` ](#either)
+  * [ `And` , （自己定义）](#and)
 
 * [Lists revisited](#lists)
   * [Implementing some basic operations on lists](#listops)
