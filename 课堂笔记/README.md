@@ -1,1 +1,1 @@
-[Type](课堂笔记/类型Type.md)
+[Type](fp/课堂笔记/类型Type.md)
