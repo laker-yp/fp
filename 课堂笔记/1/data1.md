@@ -1,4 +1,30 @@
 # User defined data types - part 1
+## Contents
+
+* [Type synonyms](#typesynonyms)
+* [User defined data types](#datatypes)
+  * [The booleans revisited](#booleans)
+  * [Type isomorphisms](#typeisos)
+  * [Weekdays](#weekdays)
+
+* [Some important type constructors](#logic)
+  * [The `Maybe` type constructor](#maybe)
+  * [Type retracts](#retracts)
+  * [The `Either` type constructor](#either)
+  * [The `And` type constructor, defined by ourselves](#and)
+
+* [Lists revisited](#lists)
+  * [Implementing some basic operations on lists](#listops)
+  * [An aside on accumulators](#accum)
+
+* [Binary trees](#bintrees)
+  * [Basic functions on binary trees](#bintreefns)
+  * [Directions, addresses and paths in binary trees](#bintreeaddr)
+  * [Proofs on binary trees by induction](#bintreepf)
+  * [Traversals in binary trees](#traversals)
+  * [Inverting traversals (generating trees)](#gentree)
+
+<a name="typesynonyms"></a>
 
 ## Level of difficulty of this handout
 
@@ -45,32 +71,7 @@ module Data1 where
 import System.Random
 ```
 
-## Contents
 
-* [Type synonyms](#typesynonyms)
-* [User defined data types](#datatypes)
-  * [The booleans revisited](#booleans)
-  * [Type isomorphisms](#typeisos)
-  * [Weekdays](#weekdays)
-
-* [Some important type constructors](#logic)
-  * [The `Maybe` type constructor](#maybe)
-  * [Type retracts](#retracts)
-  * [The `Either` type constructor](#either)
-  * [The `And` type constructor, defined by ourselves](#and)
-
-* [Lists revisited](#lists)
-  * [Implementing some basic operations on lists](#listops)
-  * [An aside on accumulators](#accum)
-
-* [Binary trees](#bintrees)
-  * [Basic functions on binary trees](#bintreefns)
-  * [Directions, addresses and paths in binary trees](#bintreeaddr)
-  * [Proofs on binary trees by induction](#bintreepf)
-  * [Traversals in binary trees](#traversals)
-  * [Inverting traversals (generating trees)](#gentree)
-
-<a name="typesynonyms"></a>
 # Type synonyms
 
 接下来几个 sections 有一个对应的 video，可以在 [Canvas](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=98b350c3-ec60-47c4-b2fb-ac610127b135) 上看。
