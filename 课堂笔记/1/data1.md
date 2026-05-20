@@ -358,19 +358,19 @@ allPositions v xs = findPositions v xs 0
 findPositions :: Eq a => a -> [a] -> Int -> [Int]
 findPositions v [] n = []
 findPositions v (x:xs) n
-  | v == x    = n : findPositions v xs (n+1)
-  | otherwise = findPositions v xs (n+1)
+  | v == x     = n : findPositions v xs (n+1) --如果v=x了，那就把n放在list前面，再递归xs
+  | otherwise  =     findPositions v xs (n+1)  --否则直接无视x，去递归xs
 ```
 
 <a name="retracts"></a>
 ## Type retracts
 
+# Bool是Int的retract
 
-以你目前的 level 来说，这一节可能相当 hard,也相当重要
+# Bool能变int再回Bool
+# Int 变 Bool再回Int 就回不到原来的值了，只能输出0，1
 
-我们已经见过 type *isomorphisms同构* 如BW和Bool和ZeroOne
-
-更一般地，types `a` 和 `b` 的 isomorphism 是一对 functions：
+如果，types `a` 和 `b` 的 isomorphism 是一对 functions：
 ```
 f :: a -> b
 g :: b -> a
@@ -379,48 +379,67 @@ g :: b -> a
  * 对所有 `y :: b`，`f (g y) = y`。
  * 对所有 `x :: a`，`g (f x) = x`。
 
-我们把这两个 equations 总结为：这两个 functions 是 *mutually inverse*。这意味着我们可以在 type `a` 的 elements 和 type `b` 的 elements 之间来回转换，就像我们把 `False` 转成 `Zero`，把 `True` 转成 `One` 那样。你可以把 `f` 和 `g` 想成 *renaming* functions：function `f = bit2Bool` 把 bit 重新命名成 boolean，function `g = bool2Bit` 把 boolean 重新命名成 bit。
+这两个 functions 是 *mutually inverse*。这意味着我们可以在 type `a` 的 变量 和 type `b` 的 变量 之间来回转换
 
-在 practice 里，这意味着我们使用 type `Bool` 及其 elements `True` 和 `False`，或者使用 type `Bit` 及其 elements `Zero` 和 `One`，本质上没什么区别。事实上，computers 正是利用 booleans 和 binary digits 之间的这种 identification 来工作的。
+另一种：一个 type `b` 可以“live” inside 另一个 type `a`
 
-还有另一种 types 之间的 relationship，在 practice 里也很有用：一个 type `b` 可以“live” inside 另一个 type `a`，意思是 type `a` 里面有 type `b` 的一个 “copy”。一个简单例子是 type `Bool` 在 type `Int` 里面有一个 copy：
+                 ↑Int                              ↑Bool
+
+type `Bool` 在 type `Int` 里面有一个 copy：
 
 ```haskell
 bool2Int :: Bool -> Int
 bool2Int False = 0
 bool2Int True  = 1
 ```
-我们不仅在 `Int` 里面有一个 `Bool` 的 copy，而且还可以回去，也就是从 `0` 和 `1` 得到 `False` 和 `True`：
+可以从T F 变成 1 0
+
+然后可以直接从把1 0变成T F
 ```haskell
 int2Bool :: Int -> Bool
 int2Bool n | n == 0    = False
            | otherwise = True
 ```
-不过要注意，不只是 `1` 会被转换回 `True`，所有不是 `0` 的东西都会被转换成 `True`。
+note：不仅仅 `1` 会被转换回 `True`，是所有非 `0` 的东西都会被转换成 `True`。
 
 我们有：
 ```
    int2Bool (bool2Int y) = y
 ```
-对每个 `y :: Bool` 都成立，但是我们没有 `bool2Int (int2Bool x) = x` 对所有 `x :: Int` 成立。比如 `x = 17` 时就失败了，因为 `bool2Int (int2Bool 17)` 是 `1`，不是 `17`。
+这个f对每个 `y :: Bool` 都成立
+```
+ bool2Int (int2Bool x) = x
+```
+但这个f不是对每个 `x :: Int` 成立
 
-我们可以说：integers 这个 type 有足够空间容纳 booleans 这个 type 的一个 copy，但是 booleans 这个 type 没有足够空间容纳 integers 这个 type 的一个 copy。
+比如 `x = 17` 时就失败了，因为 `bool2Int (int2Bool 17)` 是 `1`，不是 `17`，外层bool2Int只输出1/0
+
+我们可以说：int 这个 type 有足够空间容纳 bool 这个 type 的一个 copy，但是 booleans 这个 type 没有足够空间容纳 integers 这个 type 的一个 copy。
 
 当有 functions：
 ```
-f :: a -> b
-g :: b -> a
+a为Int; b为Bool
+
+f :: a -> b    int2Bool
+g :: b -> a    Bool2Int
 ```
 满足：
- * 对所有 `y :: b`，`f (g y) = y`。
+ * 对所有 `y :: b`，`f (g y) = y`
+   
+           y :: Bool
 
-但不一定满足对所有 `x :: a` 有 `g (f x) = x` 时，我们说 type `b` 是 type `a` 的一个 *retract*。
+但不一定满足对所有 `x :: a` 有 `g (f x) = x` 时
 
-上面的讨论说明 type `Bool` 是 type `Int` 的一个 retract。这个 retraction 和 programming language `C` 里的处理方式一样：integer `0` codes `False`，其他所有东西 codes `True`。
+我们说 type `b` 是 type `a` 的一个 *retract*。
 
-但注意，type `Bool` 也可以用其他方式 live inside type `Int` as a retract。比如，我们可以把 `False` 送到 `13`，把 `True` 送到 `17`，然后把所有大于 `15` 的东西送回 `True`，其他东西送回 `False`。我们可以自由选择如何 code things。
 
-**Task**. 证明 type `Maybe a` 是 type `[a]` 的一个 retract。思路是：`Nothing` 对应 empty list `[]`，`Just x` 对应 one-element list `[x]`。你需要把这个想法精确定义出来：写出这两个 types 之间来回转换的 functions，从而展示 `Maybe a` 是 `[a]` 的 retract。我们采用的 textbook 经常利用这种 retraction，虽然没有明确说出来。实际上，book 经常避免使用 type `Maybe a`，而是使用 type `[a]`，只考虑 list `[]`（对应 `Nothing`）和 singleton lists `[x]`（对应 `Just x`），并忽略 length 为 `2` 或更大的 lists。原因是 book 想在 monads 被讲之前避免使用 monads，而使用 list comprehensions；在 list monad 这个特定 case 里，list comprehensions 刚好能完成和 monads 的 "do notation" 类似的事情。所以这里的 coding 是出于 pedagogical purposes。
+但注意，type `Bool` 不一定对应0和1，这只是取决于个人的想法，不过无论如何只能对应两个值
+
+**Task**. 证明 type `Maybe a` 是 type `[a]` 的一个 retract
+
+`Nothing` 对应 empty list `[]`，`Just x` 对应 one-element list `[x]`
+
+你需要把这个想法精确定义出来：写出这两个 types 之间来回转换的 functions，从而展示 `Maybe a` 是 `[a]` 的 retract。我们采用的 textbook 经常利用这种 retraction，虽然没有明确说出来。实际上，book 经常避免使用 type `Maybe a`，而是使用 type `[a]`，只考虑 list `[]`（对应 `Nothing`）和 singleton lists `[x]`（对应 `Just x`），并忽略 length 为 `2` 或更大的 lists。原因是 book 想在 monads 被讲之前避免使用 monads，而使用 list comprehensions；在 list monad 这个特定 case 里，list comprehensions 刚好能完成和 monads 的 "do notation" 类似的事情。所以这里的 coding 是出于 pedagogical purposes。
 
 如果我们有一个 type retraction `(f,g)`，如上所述，那么：
 
