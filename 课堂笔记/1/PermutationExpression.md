@@ -1,6 +1,6 @@
 <a name="ptrees"></a>
-# Permutation trees
-# Permutation trees, list permutations, and paths in such trees (hard)
+# Permutation trees, list permutations
+## and paths in such trees (hard)
 
 现在我们来考虑一种 list-branching trees：它们在边上而不是节点上带有 label，并且 leaf 由 empty branching 给出。它的意思是：我们不再像 binary trees 那样，恰好有两个 subtrees，而是拥有一个（可能为空的）subtrees list。如果这个 list 是空的，那么我们就得到一个 leaf。label 位于边上，像 game trees 一样，而不是像前面的 binary trees 那样位于节点上：
 
