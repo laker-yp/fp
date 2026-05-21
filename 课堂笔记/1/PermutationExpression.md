@@ -18,7 +18,20 @@ list-branching trees：
 * label 位于边上，像 game trees 一样，比如：•── a1 --> •
 
 ```haskell
-data Tree a = EBranch [(a, Tree a)] deriving (Show)
+data Tree a = EBranch [(a, Tree a)]
+
+   deriving (Show)
+```
+```
+t1 :: Tree Char                    •
+t1 =                               ├── a --> •
+  EBranch                          └── b --> •
+    [ ('a', EBranch [])                      ├── c --> •
+    , ('b', EBranch                          └── d --> •
+        [ ('c', EBranch [])        所有路径只有三条
+        , ('d', EBranch [])        ["a", "bc", "bd"]
+        ])
+    ]
 ```
 
 于是 `EBranch []`（类型为 `Tree a`）就是一个 leaf。下面这个函数构造出从 root 到各个 leaf 的所有 path 的 list：
@@ -28,8 +41,24 @@ fullPaths :: Tree a -> [[a]]
 fullPaths (EBranch []) = [[]]
 fullPaths (EBranch forest) = [x:p | (x,t) <- forest, p <- fullPaths t]
 ```
+`forest` 是一个 list，里面每个元素的类型是 (a, Tree a)
 
-一个 forest 是类型 `[(a, Tree a)]` 的元素，也就是一个由“元素与树的 pair”构成的 list。下面这个函数给出从 root 到任意 node（包括 leaf） 的所有 path 的 list：
+`(x,t) <- forest` 是把一个个[...(x, t)...]给取出来
+
+比如`├── a --> •`那么x = 'a' t = EBranch []
+
+`p <- fullPaths t` 是对于每一条 branch (x,t)，我们去算fullPaths t
+
+比如fullPaths t = [[1,2], [3,4], [5]]
+
+那么p就依次等于[1,2]...
+                    
+`x:p`就是把x：到那一条path上
+
+
+forest就是一个由“元素与树的 pair”构成的 list。
+
+下面这个函数给出从 root 到任意 node（包括 leaf） 的所有 path 的 list：
 
 ```haskell
 paths :: Tree a -> [[a]]
@@ -38,16 +67,24 @@ paths (EBranch forest) =  [] : [x:p | (x,t) <- forest, p <- paths t]
 
 现在我们构造一个 list 的 permutation tree，使得这棵树的 full paths 恰好就是给定 list 的所有 permutation：
 
+比如permTree [1,2,3]要造一棵这样的tree
+```
+•
+├── 1 --> permTree [2,3]..继续递归..
+├── 2 --> permTree [1,3]
+└── 3 --> permTree [1,2]
+```
 ```haskell
 permTree :: Eq a => [a] -> Tree a
-permTree xs = EBranch [ (x, permTree(xs \\\ x)) | x <- xs]
-  where
+permTree xs = EBranch [ (v, permTree(xs \\\ v)) | v <- xs]
+  where  --从 list 里面删除第一个等于a的元素
     (\\\) :: Eq a => [a] -> a -> [a]
     []     \\\ _   = undefined
     (x:xs) \\\ y
       | x == y     = xs
       | otherwise  = x : (xs \\\ y)
 ```
+`permTree(xs \\\ v))` 生成把v去掉后的xs
 
 利用这个，我们就可以计算给定 list 的所有 permutation：
 
