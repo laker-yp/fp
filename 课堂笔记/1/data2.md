@@ -172,6 +172,55 @@ withoutLargest (Fork x l r)     = Fork x l (withoutLargest r)
 
 * 你能不能把最后这两个函数 `largestOf` 和 `withoutLargest` 合并成一个函数，并用 pair type 作为结果，这样就可以得到一个更高效的 delete 函数？然后再进一步结合 `Maybe`，从而避免使用 `undefined`？
 
+<a name="bstsort"></a>
+
+# BST sort： quick sort 和 merge sort
+
+当然，正如你已经知道的，你可以利用这个来对 list 排序，但是它会去掉重复元素，因为 binary search trees 不允许重复元素（这一点由我们的 `insert` 和 `inserts` 的定义体现出来）：
+
+```haskell
+bstsort :: Ord a => [a] -> [a]
+bstsort xs = treeInOrder (inserts xs Empty)
+```
+
+一种形式的 quick sort 很容易写出来：
+
+```haskell
+qsort :: Ord a => [a] -> [a]
+qsort [] = []
+qsort (x:xs) = qsort [l | l <- xs, l < x]
+            ++ [x]
+            ++ qsort [r | r <- xs, r >= x]
+```
+
+你可以很容易地修改这个函数，使得结果中的 sorted list 去除重复元素（试试看）。Merge sort 可以定义如下。这里我们把一个 list 分成偶数位置和奇数位置的元素，而不是前一半和后一半，目的是让定义更简单，同时也更高效：
+
+```haskell
+--合并两个已经排好序的 list
+merge :: Ord a => [a] -> [a] -> [a]
+merge [] [] = []
+merge [] ys = ys
+merge xs [] = xs
+merge (x:xs) (y:ys)
+  | x <= y    = x : merge xs (y:ys)
+  | otherwise = y : merge (x:xs) ys
+
+--把一个 list 拆成两个 list
+eosplit :: [a] -> ([a],[a])
+eosplit []       = ([],[])
+eosplit [x]      = ([x],[])
+eosplit (e:o:xs) = case eosplit xs of
+                     (es,os) -> (e:es, o:os)
+
+--msort：递归排序，再 merge 回来
+msort :: Ord a => [a] -> [a]
+msort xs | length xs <= 1 =  xs
+         | otherwise      = merge (msort es) (msort os)
+                            where (es, os) = eosplit xs
+```
+
+正如你所知道的，对于已经排好序或者逆序的 list，quick sort 会很慢（quadratic time）
+
 <a name="bsttest"></a>
 # Other kinds of trees
 
@@ -669,51 +718,9 @@ Empty
 Empty
 (42.25 secs, 20,813,980,136 bytes)
 ```
-
-<a name="bstsort"></a>
-# BST sort, quick sort and merge sort
-
-当然，正如你已经知道的，你可以利用这个来对 list 排序，但是它会去掉重复元素，因为 binary search trees 不允许重复元素（这一点由我们的 `insert` 和 `inserts` 的定义体现出来）：
-
-```haskell
-bstsort :: Ord a => [a] -> [a]
-bstsort xs = treeInOrder (inserts xs Empty)
-```
-
-一种形式的 quick sort 很容易写出来：
-
-```haskell
-qsort :: Ord a => [a] -> [a]
-qsort [] = []
-qsort (x:xs) = qsort [l | l <- xs, l < x]
-            ++ [x]
-            ++ qsort [r | r <- xs, r >= x]
-```
-
-你可以很容易地修改这个函数，使得结果中的 sorted list 去除重复元素（试试看）。Merge sort 可以定义如下。这里我们把一个 list 分成偶数位置和奇数位置的元素，而不是前一半和后一半，目的是让定义更简单，同时也更高效：
-
-```haskell
-merge :: Ord a => [a] -> [a] -> [a]
-merge [] [] = []
-merge [] ys = ys
-merge xs [] = xs
-merge (x:xs) (y:ys)
-  | x <= y    = x : merge xs (y:ys)
-  | otherwise = y : merge (x:xs) ys
-
-eosplit :: [a] -> ([a],[a])
-eosplit []       = ([],[])
-eosplit [x]      = ([x],[])
-eosplit (e:o:xs) = case eosplit xs of
-                     (es,os) -> (e:es, o:os)
-
-msort :: Ord a => [a] -> [a]
-msort xs | length xs <= 1 =  xs
-         | otherwise      = merge (msort es) (msort os)
-                            where (es, os) = eosplit xs
-```
-
-正如你所知道的，对于已经排好序或者逆序的 list，quick sort 会很慢（quadratic time）。所以你最好不要去尝试例如：
+=========================================================
+## 下面是sort的test
+。所以你最好不要去尝试例如：
 
 ```hs
     sum (qsort [1..(10^5)])
