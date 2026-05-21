@@ -49,26 +49,50 @@ plays board = [(m1, b1), (m2, b2), (m3, b3)]
   
 为了让这个更具体一些，我们把它应用到游戏 [Nim](https://en.wikipedia.org/wiki/Nim) 上。
 
-在这个例子里，"board" 是若干 heap 组成的集合。由于只有数量重要，所以我们把它表示成一个 `Integer` list。一个 move 则表示为：选择某个 heap，并移除若干个对象，因此我们把它表示成一个 pair：一个 `Int`（heap 的索引）和一个 `Integer`（要移除的对象个数）：
+在这个例子里，"board" 是若干 heap 组成的集合。由于只有数量重要，所以我们把它表示成一个 `Integer` list。一个 move 则表示为：选择某个 heap，并移除若干个对象，
+
+因此我们把它表示成一个 pair：一个 `Int`（heap 的索引）和一个 `Integer`（要移除的对象个数）：
 
 # Nim
 
 ```haskell
-type NimBoard = [Integer]
-data NimMove = Remove Int Integer  deriving (Show,Eq)
+type NimBoard = [Integer]  --起别名
+data NimMove = Remove Int Integer --定义新类型
+  deriving (Show,Eq) 
 ```
+* 第一行Nim的Board是什么意思？index代表第几heap，数字代表这个索引的heap有多少个石头
 
+比如 [1,2,8]代表：
+heap 0: 1 个石头
+
+heap 1: 2 个石头
+
+heap 2: 8 个石头
+
+* 第二行Nim的Move什么意思？定义新type 【NimMove】
+
+数据构造器为Remove，需要传入两个参数Int代表heap索引Integer代表要移除的石头数
+```
+Remove 2 8 --把第三堆的石头去掉搬走八个,所以这时候的board就为[1,2,0]
+```
 下面这个 `plays` 函数描述了：从给定 Nim position 出发，所有合法的 moves：
 
 ```haskell
+--                    (Remove 2 8, [1,2,0])
 nimPlays :: NimBoard -> [(NimMove,NimBoard)]
-nimPlays heaps = [(Remove i k, (hs ++ h-k : hs'))
-                 | i <- [0..length heaps-1],
-                   let (hs, h:hs') = splitAt i heaps,
-                   k <- [1..h]]
+--   list comprehension [ 生成结果 | 枚举 i, 拆分 list, 枚举 k ]
+nimPlays heaps = [(Remove i k, (hs ++ h-k : hs')) 
+                 | i <- [0..length heaps-1], --【i被注入第一个堆(0)到最后一个堆(length heaps-1)的index】
+                   let (hs, h:hs') = splitAt i heaps,  --【将heaps(board那个list)以i为基准分为左右两边】
+                   k <- [1..h]] --【从当前 heap 里，可以拿走 1 到 h 个石头】
 ```
+比如nimPlays [1,2,8] = [....(Remove 2 8, [1,2,0])....]
 
 把它作为 `gameTree` 的第一个参数传进去，我们就可以计算从某个给定 Nim position 出发的整个 game tree：
+
+(Remove i k, (hs ++ h-k : hs'))
+
+(一个move  ,  对应的board那个list变为：i索引左边的hs ++ i索引的h个石头被拿走了k个 ：i索引右边的)
 
 ```haskell
 nim :: [Integer] -> GameTree NimBoard NimMove
