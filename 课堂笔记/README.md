@@ -22,6 +22,7 @@
 
 12[data2](1/data2.md)
 * [game tree](1/gametree.md)
+* [Permutation Expression](1/PermutationExpression.md)
     
 13[lazy1](1/lazy1.md)
 
