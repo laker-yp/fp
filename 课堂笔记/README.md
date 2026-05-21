@@ -16,7 +16,7 @@
 
 9[高阶f作为参数](1/高阶.md)
 
-10[data1 maybe/either/retract/Mylist](1/data1.md)
+10[data1-maybe /either /retract /Mylist](1/data1.md)
 
 11[二叉树](1/二叉树.md)
 
