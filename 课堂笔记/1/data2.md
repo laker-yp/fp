@@ -258,7 +258,7 @@ Branch 'A'
 ```haskell
 rsize :: Rose a -> Integer
 rsize (Branch _ ts) = 1 + sum [rsize t | t <- ts]
---       不关心_,ts为子树列表
+--                得到的是一个list [1, 3, 1]，要用sum把它加起来
 ```
 
 它也可以等价地写成：
@@ -281,7 +281,7 @@ rheight (Branch _ ts) = 1 + maximum [rheight t | t <- ts] -- 错
 rheight :: Rose a -> Integer
 rheight (Branch _ []) = 0
 ----重点--------------
-rheight (Branch _ ts) = 1 + maximum [rheight t | t <- ts]
+rheight (Branch _ ts) = 1 + maximum 0:[rheight t | t <- ts]  --0是为了在[]的时候仍可以计算
 ```
 例子
 ```
@@ -292,37 +292,44 @@ BDEF都是叶子，h=0
        / \
       E   F
 ```
-第二个定义可以这样理解。在一个表达式 `Branch x ts` 中，我们把 `x` 称为 tree 的 root，把 subtrees 的 list `ts` 称为一个 `forest`。那么 forest `ts` 的 height 就是：
-
-`maximum (0 : [rheight' t | t <- ts])`
-
-特别地，如果 `ts` 是空的，那么它的 height 就是 0，这和之前的约定一样。但 `Branch x ts` 的 height 要比 forest `ts` 的 height 多 1，因为还要把 root node `x` 这一层算进去。
-
 > **Note:** 术语 "[rose tree](https://en.wikipedia.org/wiki/Rose_tree)" 在 functional programming 中非常常见。在数学和计算机科学的其他领域里，这类树更常被称为 "rooted planar trees" 或者 "rooted ordered trees"。
 
 <a name="gametrees"></a>
 # Game trees
-假设我们有一个 boards 的 type 和一个 moves 的 type，并且对于任意给定的 board，我们都知道有哪些 possible moves，以及执行每个 move 之后会得到哪个 board。给定一个初始 board，我们就可以构造出一个 game tree，表示所有可能的 play：
+* 前提：已知有两个type: boards 和 moves
+
+* 对于任意给定的 board，我们都知道有哪些 possible moves，以及执行每个 move 之后会得到相应的 board
+  
+* 给定一个初始 board，我们就可以构造出一个 game tree，表示所有可能的 play：
 
 ```haskell
+                   --Node 当前棋盘状态 [(一个move, 走完之后的子游戏树)]
 data GameTree board move = Node board [(move, GameTree board move)] 
 					deriving (Show)
 
-gameTree :: (board -> [(move,board)]) -> board -> GameTree board move
+gameTree ::(board -> [(move,board)]) -> board -> GameTree board move
 gameTree plays board = Node board [(m, gameTree plays b) | (m,b) <- plays board]
 ```
-**第一个输**入为(board -> [(move,board)])也就是plays
+**第一个输入**为(board -> [(move,board)])也就是plays
 
 plays :: board -> [(move, board)]
 
-        输入一个局面，输出可以走的方式以及对应的局面
+      当前局面 -> [(走法 , 新局面)]
+	  
+plays board = [(m1, b1), (m2, b2), (m3, b3)]
 
   -意思是给你一个局面 board，返回所有合法走法and对应的新局面列表。
   
-**第二个输**入为board 也就是初始局面
+**第二个输入**入为board 也就是初始(当前)局面
 
 **输出**：从这个初始局面开始的整棵game tree
 [(m, gameTree plays b) | (m,b) <- plays board]
+
+|右边是通过plays将初始board生成的一个个(m,b)，
+
+把(m,b)一个个丢到|左边的(m, gameTree plays b)对m,b进行处理
+
+处理方法：对每个 (m,b)，构造一个分支：m以及相应的分枝(从 b 开始继续生成的 game tree)
 
 1先调用 plays board
 
