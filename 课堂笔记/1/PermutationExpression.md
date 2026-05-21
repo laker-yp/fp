@@ -1,8 +1,21 @@
 <a name="ptrees"></a>
 # Permutation trees, list permutations
 ## and paths in such trees (hard)
+Permutation tree 的每一层是在选一个还没用过的元素；每一条从 root 到 leaf 的路径就是一个完整排列。
 
-现在我们来考虑一种 list-branching trees：它们在边上而不是节点上带有 label，并且 leaf 由 empty branching 给出。它的意思是：我们不再像 binary trees 那样，恰好有两个 subtrees，而是拥有一个（可能为空的）subtrees list。如果这个 list 是空的，那么我们就得到一个 leaf。label 位于边上，像 game trees 一样，而不是像前面的 binary trees 那样位于节点上：
+比如[1,2,3]的排列=[1,2,3]
+[1,3,2]
+[2,1,3]
+[2,3,1]
+[3,1,2]
+[3,2,1]
+
+list-branching trees：
+* label在边上而不是节点上
+* 并且 leaf 由 empty branching 给出
+* 拥有一个（可能为空的）subtrees list
+* 如果这个 list 是空的，那么我们就得到一个 leaf
+* label 位于边上，像 game trees 一样，比如：•── a1 --> •
 
 ```haskell
 data Tree a = EBranch [(a, Tree a)] deriving (Show)
