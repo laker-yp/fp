@@ -83,19 +83,17 @@ Nothing：表示插入失败，因为元素已经存在
 
 ```haskell
 insert' :: Ord a => a -> BT a -> Maybe (BT a)
-insert' v Empty                    = Just (Fork v Empty Empty)
+insert' v Empty = Just (Fork v Empty Empty)
+insert' v (Fork x l r)
+  | v < x = case insert' v l of
+              Nothing -> Nothing
+              Just l' -> Just (Fork x l' r)
 
------重点---
-insert' v (Fork x l r) | v < x     = case insert' v l of
-                                       Nothing -> Nothing --当识别到这一行的时候已经递归结束了，这个case是递归失败的结果
-                                       Just l' -> Just (Fork x l' r) --说明左子树插入成功，得到新左子树 l'
-                                                                     --此时整棵树为: Just (Fork x l' r)
+  | v > x = case insert' v r of
+              Nothing -> Nothing
+              Just r' -> Just (Fork x l r')
 
-                       | v > x     = case insert' v r of
-                                       Nothing -> Nothing
-                                       Just r' -> Just (Fork x l r')
-
-                       | otherwise = Nothing
+  | otherwise = Nothing
 ```
 例
 插入 6：
