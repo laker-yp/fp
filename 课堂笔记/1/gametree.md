@@ -99,8 +99,11 @@ nim :: [Integer] -> GameTree NimBoard NimMove
 nim = gameTree nimPlays
 ```
 
-（注意，这个定义是 "[point-free](https://wiki.haskell.org/Pointfree)" 的，而且我们只对函数 `gameTree` 做了部分应用。上面的定义和 `nim initHeaps = gameTree nimPlays initHeaps` 完全等价，只是更简洁。）
-
+（注意，这个定义是 "[point-free](https://wiki.haskell.org/Pointfree)" 的,和下面普通版本是等价的
+```haskell
+nim :: [Integer] -> GameTree NimBoard NimMove
+nim initHeaps = gameTree nimPlays initHeaps --gameTree是生成当前局面会产生的所有哦(m,b)，后面两个是传入的参数，play和当前的局面
+```
 我们用 Nim 试一试：
 
 ```hs
