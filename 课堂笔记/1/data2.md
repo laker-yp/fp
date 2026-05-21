@@ -136,14 +136,15 @@ delete x (Fork y l r) | x < y                = Fork y (delete x l) r --要删的
                        --最麻烦:左右子树都存在
                       | otherwise            = Fork (largestOf l) (withoutLargest l) r
                            --                    左子树最大的元素    去除左最大后的左子树  原来的r
-子函数1：返回一棵 BST 中最大的元素
+
+--子函数1：返回一棵 BST 中最大的元素
 largestOf :: Ord a => BT a -> a
 largestOf Empty            = undefined
 ---重点---
 largestOf (Fork x l Empty) = x  --没有R了，说明本node为MAX
 largestOf (Fork x l r)     = largestOf r --如果右子树不空，那最大值还在更右边，于是递归找右子树最大值。
 
-子函数2：返回“删掉最大元素之后的那棵树
+--子函数2：返回“删掉最大元素之后的那棵树
 withoutLargest :: Ord a => BT a -> BT a
 withoutLargest Empty            = undefined
 ---重点---
