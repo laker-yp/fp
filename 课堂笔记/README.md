@@ -21,6 +21,7 @@
 11[二叉树](1/二叉树.md)
 
 12[data2](1/data2.md)
+   * [game tree](1/game-tree.md)
     
 13[lazy1](1/lazy1.md)
 
