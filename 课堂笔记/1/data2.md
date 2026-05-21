@@ -177,9 +177,8 @@ withoutLargest (Fork x l r)     = Fork x l (withoutLargest r)
 * 你能不能写一个 `delete'` 函数，使用 `Maybe` return type 来表示“没有东西可以删除”？
 
 * 你能不能把最后这两个函数 `largestOf` 和 `withoutLargest` 合并成一个函数，并用 pair type 作为结果，这样就可以得到一个更高效的 delete 函数？然后再进一步结合 `Maybe`，从而避免使用 `undefined`？
-
-<a name="bstsort"></a>
 ## sort
+<a name="bstsort"></a>
 # BST sort： quick sort 和 merge sort
 
 当然，正如你已经知道的，你可以利用这个来对 list 排序，但是它会去掉重复元素，因为 binary search trees 不允许重复元素（这一点由我们的 `insert` 和 `inserts` 的定义体现出来）：
