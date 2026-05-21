@@ -188,7 +188,7 @@ bstsort xs = treeInOrder (inserts xs Empty)
 ```haskell
 qsort :: Ord a => [a] -> [a]
 qsort [] = []
-qsort (x:xs) = qsort [l | l <- xs, l < x]
+qsort (x:xs) = qsort [l | l <- xs, l < x] l这个list为xs中全部比x小的元素
             ++ [x]
             ++ qsort [r | r <- xs, r >= x]
 ```
@@ -202,21 +202,21 @@ merge [] [] = []
 merge [] ys = ys
 merge xs [] = xs
 merge (x:xs) (y:ys)
-  | x <= y    = x : merge xs (y:ys)
-  | otherwise = y : merge (x:xs) ys
+  | x <= y    = x : merge xs (y:ys) --递归思想，先复制，(x:xs)变成xs，需要处理的x是否需要留下，当然!所以放在前头用:链接
+  | otherwise = y : merge (x:xs) ys --每次都对两个list的头进行对比，把小的那个放前头，剩下的继续递归
 
 --把一个 list 拆成两个 list
 eosplit :: [a] -> ([a],[a])
 eosplit []       = ([],[])
 eosplit [x]      = ([x],[])
-eosplit (e:o:xs) = case eosplit xs of
-                     (es,os) -> (e:es, o:os)
+eosplit (e:o:xs) = case eosplit xs of    --先把剩下的 xs 拆好，再把当前的 e 放进第一组，把当前的 o 放进第二组。
+                     (es,os) -> (e:es, o:os)  --case是根据output的形状进行匹配，(es,os)就是一个输出的形状，设为新的临时变量
 
 --msort：递归排序，再 merge 回来
 msort :: Ord a => [a] -> [a]
 msort xs | length xs <= 1 =  xs
          | otherwise      = merge (msort es) (msort os)
-                            where (es, os) = eosplit xs
+                            where (es, os) = eosplit xs  --where的作用是对上式的新变量进行说明
 ```
 
 正如你所知道的，对于已经排好序或者逆序的 list，quick sort 会很慢（quadratic time）
