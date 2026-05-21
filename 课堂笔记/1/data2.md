@@ -1,12 +1,9 @@
 
-## Binary search trees
+# 【BST】 Binary search trees
 左子树的每一个node都小于root，右子树大于
 
 <a name="bstops"></a>
-### Operations on binary search trees
-
-我们从上一篇 [handout](/files/LectureNotes/Sections/Data1.md) 导入 Haskell 代码：
-
+## 前情提要
 ```haskell
 {-# OPTIONS_GHC -fwarn-incomplete-patterns #-}
 
@@ -15,32 +12,29 @@ module Data2 where
 import Data1
 import System.Random
 ```
-
-下面这个函数检查一棵 binary tree是否是 BST
-**isBST**
+下面这个函数检查一棵 binary tree是否是 BST(低效的方法O(n^2)）
+## isBST
 ```haskell
 isBST :: Ord a => BT a -> Bool
 isBST Empty        = True
---/重点///////////////
-isBST (Fork x l r) = allSmaller x l
-                  && allBigger  x r --测左右与当前root
-                  && isBST l --去测左子树
-                  && isBST r
-
---/子函数：检查左边的所有node是否都小于一个数x（在isBST中是root）
+--重点///////////////
+isBST (Fork x l r) =    allSmaller x l
+                     && allBigger  x r
+                     && isBST l
+                     && isBST r
+--子函数：检查左边的所有node是否都小于一个数x（root）
 allSmaller :: Ord a => a -> BT a -> Bool
 allSmaller x Empty        = True
-allSmaller x (Fork y l r) = y < x   --/当前的root比x小
-                         && allSmaller x l  --/ a && b 意为a通过了就进行b，这里去测左子树了
+allSmaller x (Fork y l r) = y < x   --当前的root比x小
+                         && allSmaller x l  -- a && b 意为a通过了就进行b，这里去测左子树了
                          && allSmaller x r
-
 --allBigger同理
 ```
+根据BST的性质，它的 in-order traversal 是一个 sorted list
 
-这不是检查BST性质的高效方法（它运行时间是 quadratic time）n的平方
+所以我们先把`t`以in-order遍历成list
 
-
-一种更好的检查 BST 性质的方法（linear time）是先生成它的 in-order traversal。结果表明：一棵树具有 BST 性质，当且仅当它的 in-order traversal 是一个 sorted list
+然后检查这个list是否为递增
 
 ```haskell
 isBST' :: Ord a => BT a -> Bool
@@ -49,16 +43,16 @@ isBST' t = isIncreasing (treeInOrder t)
 isIncreasing :: Ord a => [a] -> Bool
 isIncreasing []       = True
 isIncreasing (x:[])   = True
---/重点///////////
+--重点///////////
 isIncreasing (x:y:zs) = x < y && isIncreasing (y:zs)
 ```
 比如[1,2,3,4,5]先比1,2然后2,3...
 
-**Puzzle**. 你能不能写出另一个版本的 `isBST`，它也能在 linear time 内运行，但又**不**把 in-order traversal list 作为中间结果显式构造出来？
+**Puzzle**（hard）. 你能不能写出另一个版本的 `isBST`，它也能在 linear time 内运行，但又**不**把 in-order traversal list 作为中间结果显式构造出来？
 
 正如你会记得的，binary search trees 的意义在于：如果它们足够平衡，那么它们就可以被快速搜索O（log n）：
 
-**occurs**
+## **occurs**判断某个值是否出现在一棵二叉搜索树里
 
 ```haskell
 occurs :: Ord a => a -> BT a -> Bool
@@ -70,16 +64,17 @@ occurs x (Fork y l r) = x == y
                                                --||意为满足一个即可
 ```
 
-**insert** —— 往 BST 里插入元素
+## **insert** —— 往 BST 里插入元素
 必须保证插完以后，BST 的顺序性质不能被破坏
 
 ```haskell
 insert :: Ord a => a -> BT a -> BT a
-insert x Empty                    = Fork x Empty Empty
----重点---
-insert x (Fork y l r) | x < y     = Fork y (insert x l) r  --情况1：插入的node x比当前root小，那就去左边遍历
-                      | x > y     = Fork y l (insert x r)  --同上，直到出现base case 比较的目标为Empty了，以x作为node
-                      | otherwise = Fork y l r  --如果要插入的元素已经在树中，那么我们就返回同一棵树
+insert v Empty = Fork v Empty Empty
+insert v (Fork x l r)
+  | v == x    = Fork x l r            --情况1：插入的node x比当前root小，那就去左边遍历
+  | v < x     = Fork x (insert v l) r --直到出现base case比较的目标为Empty了,以x作为node
+  | otherwise = Fork x l (insert v r) --要插入的元素已经在树中，那么我们就返回同一棵树
+                     
 ```
 
 其他做法: 使用 `Maybe` return type
@@ -88,15 +83,18 @@ Nothing：表示插入失败，因为元素已经存在
 
 ```haskell
 insert' :: Ord a => a -> BT a -> Maybe (BT a)
-insert' x Empty                    = Just (Fork x Empty Empty)
+insert' v Empty                    = Just (Fork v Empty Empty)
+
 -----重点---
-insert' x (Fork y l r) | x < y     = case insert' x l of
-                                       Nothing -> Nothing --说明左子树里插入失败了
-                                       Just l' -> Just (Fork y l' r) --说明左子树插入成功，得到新左子树 l'
-                                                                     --此时整棵树为:Just (Fork y l' r)
-                       | x > y     = case insert' x r of
+insert' v (Fork x l r) | v < x     = case insert' v l of
+                                       Nothing -> Nothing --当识别到这一行的时候已经递归结束了，这个case是递归失败的结果
+                                       Just l' -> Just (Fork x l' r) --说明左子树插入成功，得到新左子树 l'
+                                                                     --此时整棵树为: Just (Fork x l' r)
+
+                       | v > x     = case insert' v r of
                                        Nothing -> Nothing
-                                       Just r' -> Just (Fork y l r')
+                                       Just r' -> Just (Fork x l r')
+
                        | otherwise = Nothing
 ```
 例
@@ -117,7 +115,7 @@ insert' x (Fork y l r) | x < y     = case insert' x l of
 
 这段代码还可以稍微简化一点，因为 `Maybe` 是一个 monad，不过我们之后才会讲到这一点。
 
-**delete**
+## **delete**
 对于 BST 来说，最难的函数是 deletion：
 
 ```haskell
@@ -172,7 +170,7 @@ withoutLargest (Fork x l r)     = Fork x l (withoutLargest r)
 # Other kinds of trees
 
 <a name="rosetrees"></a>
-## Rose trees
+# Rose trees
 可理解为**多叉树**
 在 binary trees 中有零分支（像 `Empty`）和二分支（像 `Fork`）。
 ```haskell
@@ -201,7 +199,7 @@ Branch 'A'
   ]
 ```
 注意，这里没有 empty rose tree，但是存在一种 rose tree：它有一个 label，同时没有任何 subtree（更准确地说，它的 subtrees 是一个空 list）。例如，rose tree 的 size 可以定义如下，因此它总是一个正数：
-**rose大小**
+## **rose大小**
 ```haskell
 rsize :: Rose a -> Integer
 rsize (Branch _ ts) = 1 + sum [rsize t | t <- ts]
@@ -216,7 +214,7 @@ rsize' (Branch _ ts) = 1 + sum (map rsize' ts)
 ```
 把函数 rsize' 应用到列表 ts 的每个元素上
 
-**rose 高**
+## **rose 高**
 错误示范
 ```hs
 rheight :: Rose a -> Integer
@@ -248,10 +246,7 @@ BDEF都是叶子，h=0
 > **Note:** 术语 "[rose tree](https://en.wikipedia.org/wiki/Rose_tree)" 在 functional programming 中非常常见。在数学和计算机科学的其他领域里，这类树更常被称为 "rooted planar trees" 或者 "rooted ordered trees"。
 
 <a name="gametrees"></a>
-## Game trees
-
-有一个讨论这一节的视频，[available on Canvas](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=369be201-6656-4702-a221-ac6200e86be3)。
-
+# Game trees
 假设我们有一个 boards 的 type 和一个 moves 的 type，并且对于任意给定的 board，我们都知道有哪些 possible moves，以及执行每个 move 之后会得到哪个 board。给定一个初始 board，我们就可以构造出一个 game tree，表示所有可能的 play：
 
 ```haskell
@@ -291,9 +286,7 @@ Nim内容在最后面
 
 
 <a name="ptrees"></a>
-## Permutation trees, list permutations, and paths in such trees (hard)
-
-有一个讨论这一节的视频，[available on Canvas](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=f90ddf8c-9d5f-4be6-88f5-ac6200efc923)。
+# Permutation trees, list permutations, and paths in such trees (hard)
 
 现在我们来考虑一种 list-branching trees：它们在边上而不是节点上带有 label，并且 leaf 由 empty branching 给出。它的意思是：我们不再像 binary trees 那样，恰好有两个 subtrees，而是拥有一个（可能为空的）subtrees list。如果这个 list 是空的，那么我们就得到一个 leaf。label 位于边上，像 game trees 一样，而不是像前面的 binary trees 那样位于节点上：
 
@@ -379,7 +372,7 @@ permutations2 = fullPaths . permTree2
 * 你应该说服自己：我们这种借助 trees 的方法，对应于那些“不借助 trees 的方法”中的某些方案。
 
 <a name="exprtrees"></a>
-## Expression trees
+# Expression trees
 
 有一个讨论这一节的视频，[available on Canvas](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=5a578db9-e6bd-486b-9ab4-ac6200f3a2b2)。
 
