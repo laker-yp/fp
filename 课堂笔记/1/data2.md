@@ -215,7 +215,7 @@ eosplit (e:o:xs) = case eosplit xs of    --先把剩下的 xs 拆好，再把当
 --msort：递归排序，再 merge 回来
 msort :: Ord a => [a] -> [a]
 msort xs | length xs <= 1 =  xs
-         | otherwise      = merge (msort es) (msort os)
+         | otherwise      = merge (msort es) (msort os)  --其实就是把它一直拆开拆到最后一个个元素自己为一个list的时候，进行merge
                             where (es, os) = eosplit xs  --where的作用是对上式的新变量进行说明
 ```
 
