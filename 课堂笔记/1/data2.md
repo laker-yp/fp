@@ -77,7 +77,7 @@ insert v (Fork x l r)
                      
 ```
 
-其他做法: 使用 `Maybe` return type
+### 使用 `Maybe`来insert
 Just newTree：表示插入成功，并给出新树
 Nothing：表示插入失败，因为元素已经存在
 
@@ -94,6 +94,13 @@ insert' v (Fork x l r)
               Just r' -> Just (Fork x l r')
 
   | otherwise = Nothing
+
+先算 insert' v l
+如果结果是 Nothing：
+    返回 Nothing
+如果结果是 Just l'：
+    说明成功得到了新的左子树 l'
+    返回 Just (Fork x l' r)
 ```
 例
 插入 6：
