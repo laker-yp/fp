@@ -160,7 +160,7 @@ withoutLargest (Fork x l r)     = Fork x l (withoutLargest r)
 * 你能不能把最后这两个函数 `largestOf` 和 `withoutLargest` 合并成一个函数，并用 pair type 作为结果，这样就可以得到一个更高效的 delete 函数？然后再进一步结合 `Maybe`，从而避免使用 `undefined`？
 
 <a name="bsttest"></a>
-### Testing and experimenting with the BST code
+# Testing and experimenting with the BST code
 
 学会如何 [test](https://en.wikipedia.org/wiki/Software_testing) 你的代码（检验其 correctness），以及如何对代码进行 experiment（考察其 efficiency），是非常重要的。这一点不仅对这门 module 很重要，对你未来如果想把 software developer 作为职业，也同样非常重要。下面给出一些起步想法，帮助你为这门 module 中你写的代码设计你自己的 tests。最核心的一点是：你要写代码去测试“本来应该为真的东西是否真的成立”，并且测试运行时间。
 
