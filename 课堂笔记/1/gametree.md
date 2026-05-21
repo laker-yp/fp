@@ -14,6 +14,10 @@ data GameTree board move = Node board [(move, GameTree board move)]
 gameTree ::(board -> [(move,board)]) -> board -> GameTree board move
 gameTree plays board = Node board [(m, gameTree plays b) | (m,b) <- plays board]
 ```
+* plays     只看“下一步”
+
+* gameTree  会把“所有后续步骤”都递归展开
+
 **第一个输入**为(board -> [(move,board)])也就是plays
 
 plays :: board -> [(move, board)]
