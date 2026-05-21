@@ -2,13 +2,9 @@
 # 【BST】 Binary search trees
 
 - [isBST](##isBST)
-- [occurs](##**occurs**判断某个值是否出现在一棵二叉搜索树里)
-- [insert](##**insert**——往BST里插入元素)
-- [delete](##**delete**)
 - [sort](#BST-sort：-quick-sort-和-merge-sort)
 - [testing](#Testing)
 - [Rose](#Rose-trees)
-- [](##)
 
 左子树的每一个node都小于root，右子树大于
 
