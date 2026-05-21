@@ -671,7 +671,7 @@ Empty
 ```
 
 <a name="bstsort"></a>
-### BST sort, quick sort and merge sort
+# BST sort, quick sort and merge sort
 
 当然，正如你已经知道的，你可以利用这个来对 list 排序，但是它会去掉重复元素，因为 binary search trees 不允许重复元素（这一点由我们的 `insert` 和 `inserts` 的定义体现出来）：
 
