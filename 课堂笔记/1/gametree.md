@@ -127,6 +127,7 @@ Nim 通常作为一个 two-player game 在 ["misère"](https://en.wikipedia.org/
 
 ```haskell
 isWinning, isLosing :: Bool -> GameTree board move -> Bool
+--第一个参数 Bool：isMisere = T/F  
 isWinning isMisere (Node b mgs)
         | null mgs  = isMisere
         | otherwise = any (isLosing isMisere)  [g | (m,g) <- mgs]
