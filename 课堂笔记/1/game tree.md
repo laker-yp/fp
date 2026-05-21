@@ -1,4 +1,57 @@
+<a name="gametrees"></a>
+# Game trees
+* 前提：已知有两个type: boards 和 moves
+
+* 对于任意给定的 board，我们都知道有哪些 possible moves，以及执行每个 move 之后会得到相应的 board
+  
+* 给定一个初始 board，我们就可以构造出一个 game tree，表示所有可能的 play：
+
+```haskell
+                   --Node 当前棋盘状态 [(一个move, 走完之后的子游戏树)]
+data GameTree board move = Node board [(move, GameTree board move)] 
+					deriving (Show)
+
+gameTree ::(board -> [(move,board)]) -> board -> GameTree board move
+gameTree plays board = Node board [(m, gameTree plays b) | (m,b) <- plays board]
+```
+**第一个输入**为(board -> [(move,board)])也就是plays
+
+plays :: board -> [(move, board)]
+
+      当前局面 -> [(走法 , 新局面)]
+	  
+plays board = [(m1, b1), (m2, b2), (m3, b3)]
+
+  -意思是给你一个局面 board，返回所有合法走法and对应的新局面列表。
+  
+**第二个输入**入为board 也就是初始(当前)局面
+
+**输出**：从这个初始局面开始的整棵game tree
+[(m, gameTree plays b) | (m,b) <- plays board]
+
+|右边是通过plays将初始board生成的一个个(m,b)，
+
+把(m,b)一个个丢到|左边的(m, gameTree plays b)对m,b进行处理
+
+处理方法：对每个 (m,b)，构造一个分支：m以及相应的分枝(从 b 开始继续生成的 game tree)
+
+1先调用 plays board
+
+2它会列出所有合法走法 (m,b)
+
+  -m 是这一步怎么走
+  -b 是走完后的新局面
+3对每个 (m,b)，构造一个分支：
+  -边标签是 m
+  -子树是从 b 开始继续生成的 game tree
+
+  **建议举例理解**
+  
+为了让这个更具体一些，我们把它应用到游戏 [Nim](https://en.wikipedia.org/wiki/Nim) 上。
+
 在这个例子里，"board" 是若干 heap 组成的集合。由于只有数量重要，所以我们把它表示成一个 `Integer` list。一个 move 则表示为：选择某个 heap，并移除若干个对象，因此我们把它表示成一个 pair：一个 `Int`（heap 的索引）和一个 `Integer`（要移除的对象个数）：
+
+# Nim
 
 ```haskell
 type NimBoard = [Integer]
