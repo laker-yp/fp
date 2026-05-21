@@ -123,7 +123,7 @@ Node [2,1] [(Remove 0 1,Node [1,1] [(Remove 0 1,Node [0,1] [(Remove 1 1,Node [0,
 Node [1,1,1] [(Remove 0 1,Node [0,1,1] [(Remove 1 1,Node [0,0,1] [(Remove 2 1,Node [0,0,0] [])]),(Remove 2 1,Node [0,1,0] [(Remove 1 1,Node [0,0,0] [])])]),(Remove 1 1,Node [1,0,1] [(Remove 0 1,Node [0,0,1] [(Remove 2 1,Node [0,0,0] [])]),(Remove 2 1,Node [1,0,0] [(Remove 0 1,Node [0,0,0] [])])]),(Remove 2 1,Node [1,1,0] [(Remove 0 1,Node [0,1,0] [(Remove 1 1,Node [0,0,0] [])]),(Remove 1 1,Node [1,0,0] [(Remove 0 1,Node [0,0,0] [])])])]
 ```
 
-Nim 通常作为一个 two-player game 在 ["misère"](https://en.wikipedia.org/wiki/Mis%C3%A8re) 规则下进行：第一个**不能**走的人获胜；但它也可以按普通 two-player game 规则玩：第一个**不能**走的人失败。对于某个给定 position，先手是否有 *winning strategy*，这个问题完全可以封装进 game trees 的逻辑之中。
+Nim 通常作为一个 two-player game 在 ["misère"](https://en.wikipedia.org/wiki/Mis%C3%A8re) 规则下进行：第一个**不能**走(石头被拿完了)的人获胜；但它也可以按普通 two-player game 规则玩：第一个**不能**走的人失败。对于某个给定 position，先手是否有 *winning strategy*，这个问题完全可以封装进 game trees 的逻辑之中。
 
 ```haskell
 isWinning, isLosing :: Bool -> GameTree board move -> Bool
