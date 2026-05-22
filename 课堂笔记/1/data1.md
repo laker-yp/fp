@@ -523,9 +523,9 @@ data Either a b = Left a | Right b
 ```
 ## Either具体例子
 ```
-Div :: Int -> Int -> 【Either String Int】
-Div x 0 = Left "c n m"
-Div x y = Right (x `div` y)
+myDiv :: Int -> Int -> 【Either String Int】
+myDiv x 0 = Left "c n m"
+myDiv x y = Right (x `div` y)--括号内是一个Int类
 ```
 核心想法是：Left 和 Right 是一个标签，通过这个可以理解*Maybe a*的Maybe也只是一个标签
 
