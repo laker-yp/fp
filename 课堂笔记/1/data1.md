@@ -119,6 +119,12 @@ data Bool = False | True
 False && _ = False
 True  && x = x
 ```
+再比如List 本质上也可以理解成
+```
+data [a] = [] | a : [a]
+```
+那么在写f的pattern的时候也是先对[]做，再对a : [a]做
+
 Haskell 里 pattern-matching 的 semantics 有一个稍微 subtle 的地方：
 
 1. 不同的pattern-matching会从*上到下*依次尝试。
