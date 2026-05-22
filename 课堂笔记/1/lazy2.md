@@ -54,7 +54,7 @@ x = fibstep x
 回忆一下fix是输入一个函数，返回这个函数的不动点
 
 fib' :: Integer -> Integer
-fib' = fix fibstep --返回了fibstep这个函数的不动点
+fib' = fix fibstep --返回了fibstep这个函数的不动点，让这个不动点为fib'
 ```
 这就是 fibonacci function 递归定义中的 *recursion step*。我们有下面这个定理：
 ```
