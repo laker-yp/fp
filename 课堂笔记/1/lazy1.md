@@ -43,6 +43,9 @@ data Nat = Zero | Succ Nat
         3= Succ (Succ (Succ Zero))
            ...
 ```
+`Succ n`
+表示 n 的下一个自然数。
+
 我们可以在 Haskell 中这样定义：
 ```haskell
 one, two, three :: Nat
@@ -71,7 +74,7 @@ Succ (Succ (Succ ...))
 ```haskell
 length' :: [a] -> Nat
 length' []     = Zero
-length' (x:xs) = Succ (length' xs)
+length' (x:xs) = Succ (length' xs) --把当下要处理的x变成一个Succ，然后再去递归处理xs
 ```
 这个结构可以只展开前面几层，而不用一次性全部求完。
 
