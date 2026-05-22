@@ -1,12 +1,7 @@
 # Laziness
-
 惰性求值
 
-# Memoization
-因为laziness，所以可以记录下“已经算过的东西”，并且保存，从而避免重复计算
-## A sample inefficient recursive definition
-
-这个是个（以低效方式定义的）fibonacci function：
+前情：这个是个（以低效方式定义的）fibonacci function：
 
 ```haskell
 fib :: Integer -> Integer
@@ -14,9 +9,16 @@ fib 0 = 1
 fib 1 = 1
 fib n = fib(n-2) + fib(n-1)
 ```
+# Memoization
+因为laziness，所以可以记录下“已经算过的东西”，并且保存，从而避免重复计算
+## A sample inefficient recursive definition
 
-## Recursion via the fixed-point combinator `fix`
+### fixed point
+比如说`f x = x * x` 那么x=0，x=1都是f的不动点，因为f 1 = 1
 
+意思是x经过f之后还是原来的x，当然x不一定是数字，也可以是函数
+
+定义fix-point `x`
 ```haskell
 fix :: (a -> a) -> a
 fix f = x
@@ -27,26 +29,34 @@ x = f x
 ```
 fix f 返回的是 f 的一个不动点
 
-这里是递归地定义了 `x`。我们通常更关心的是 `a` 是函数类型的情况，比如 `b -> c`。
+这里是递归地定义了 `x`。我们通常更关心的是 `a` 是函数类型的情况，比如 `b -> c`,比如下面这个
 
-使用 fixed-point combinator `fix`，这个函数也可以等价地定义为：
+使用 fixed-point combinator `fix`，这个函数也可以等价地定义为：fibstep
+### fibstep
+fibstep很好理解，意思制造一个h函数，但这个函数使用g来递归的而不是自己
 
+输入一个 “临时函数 g”，输出一个 “新版 Fibonacci-like 函数 h”
 ```haskell
 fibstep :: (Integer -> Integer) -> (Integer -> Integer)
 fibstep g = h
----给我一个函数 g，我构造一个新函数 h 给你
+
 where
 h :: Integer -> Integer
 h 0 = 1
 h 1 = 1
-h n = g(n-2) + g(n-1)
+h n = g(n-2) + g(n-1)  --g可以理解为“假装已经有一个会算前面 Fibonacci 值的函数。”
+
+这时候g可以是任何函数，不过为了让fib'成为真正的fib函数，g应该= h
+h n = h (n-2) + h (n-1)这样才是真正的fib函数
+因此我们的目标就是找到一个函数 x，使得：
+x = fibstep x
+
+回忆一下fix是输入一个函数，返回这个函数的不动点
 
 fib' :: Integer -> Integer
-fib' = fix fibstep
+fib' = fix fibstep --返回了fibstep这个函数的不动点
 ```
-
 这就是 fibonacci function 递归定义中的 *recursion step*。我们有下面这个定理：
-
 ```
 fib  = fibstep fib
 fib' = fibstep fib'
@@ -56,30 +66,31 @@ fib' = fibstep fib'
 
 函数 `fib'` 和 `fib` 一样低效（你可以自己试试）。
 
-## Memoizing fixed-point combinator
+# Memoizing fixed-point combinator
 
 我们可以用一个无限的惰性列表，来存储一个从非负整数（natural numbers）到某个类型 `a` 的函数：
 
 ```haskell
-store 输入一个函数(这个函数输入Integer输出结果a)然后返回一个结果a 的列表。
+store 输入一个函数(这个函数输入`Integer -> a`)然后返回一个结果`a的列表`
 
 store :: (Integer -> a) -> [a]
-store f = [f i | i <- [0..]]
+store f = [f i | i <- [0..]] --把一个函数 Integer -> a 变成一张无限 lazy table。
 ```
 实际上就是生成[f 0, f 1, f 2, f 3, ...]
+```
+store f = map f [0..] --其实就是map。。不过目的不一样
+```
 
 即不同n会生产的不同结果，然后打包进list
 
 比如f n = n * 10
 
-store f
+store f 就输出[0,10,20,30,40,50,...]
 
-则输出[0,10,20,30,40,50,...]
-
-反之可以把它取回来：
+反之可以取出index为n的元素的计算结果
 
 ```haskell
-fetch :: [a] -> (Integer -> a)
+fetch :: [a] -> Integer -> a
 fetch (x:xs) 0 = x
 fetch (x:xs) n = fetch xs (n-1)
 ```
@@ -93,8 +104,14 @@ fetch [10,20,30,40] 0 = 10
 memoList :: (Integer -> a) -> (Integer -> a)
 memoList= fetch . store
 ```
+比如f n = n*10
 
-我们得到的还是原来那个函数（至少就它在非负整数上的行为来说是一样的）。
+`memoList f 3` 就等于 `30`, 这其实和`f 3`是一样的，不过memoList f 3的过程和它不一样：
+* 第一步：用 `store f` 建表
+* 第二步：用 `fetch` 从表里取值
+`memoList f 3` 第一次算完之后，结果存在 lazy list 里。之后再要第 3 个位置，就可以复用
+
+`f 3`没有表也没有记忆功能，所以每次都要重新计算
 
 由于 laziness，一旦列表中的某个元素被计算出来，它就会保持为已计算状态。因此，如果我们像下面这样定义 fibonacci，它就会变成线性时间：
 
