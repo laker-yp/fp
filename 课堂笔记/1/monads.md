@@ -20,31 +20,7 @@ import Control.Monad.State
 import Control.Applicative
 import Data.Char
 ```
-
-<a name="videolectures"></a>
-## Video lectures
-
-   * [Motivation for monads](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=b5efd83f-e13a-4e93-81ea-ac6d00c438de) (10min).
-
-   * [The `Maybe` and list monads](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=594c51f2-c1c3-455d-b92c-ac6d00c4384b) (11min).
-
-   * [Accounting for errors with the `Maybe` monad](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=8c5914d4-759a-4f1d-baee-ac6d00c438b0) (8min).
-
-   * [Accounting for errors with the list monad](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=fee642ca-112d-47de-9d68-ac6d00c4a004) (8min).
-
-   * [Producing a log of the computation with the `Writer` monad](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=fff1cb18-2267-44a5-818a-ac6d00c4d49c) (6min).
-
-   * [Counting the number of recursive calls with the `State` monad](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=e3ea5ff5-1616-40a5-aeb9-ac6d00c53ed3) (13min).
-
-   * [What monads are, how they work, and how to define new ones, how the list monad works](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=4cd39e86-9b25-4340-8836-ac6d00c5daab) (9min).
-
-   * [How the `Maybe` monad works, and translating `do` notation to `>>=`](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=01e4469d-9d09-4694-82ba-ac6d00c62c61) (10min).
-
-Total time 1:15hrs.
-
 ## Motivation
-
-这一部分有对应的 [video](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=b5efd83f-e13a-4e93-81ea-ac6d00c438de)。
 
 考虑下面这个 Java program：
 ```java
