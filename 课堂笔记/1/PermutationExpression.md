@@ -33,14 +33,12 @@ t1 =                               ├── a --> •
         ])
     ]
 ```
-
-于是 `EBranch []`（类型为 `Tree a`）就是一个 leaf。下面这个函数构造出从 root 到各个 leaf 的所有 path 的 list：
-
-```haskell
+```
 fullPaths :: Tree a -> [[a]]
 fullPaths (EBranch []) = [[]]
 fullPaths (EBranch forest) = [x:p | (x,t) <- forest, p <- fullPaths t]
 ```
+
 `forest` 是一个 list，里面每个元素的类型是 (a, Tree a)
 
 `(x,t) <- forest` 是把一个个[...(x, t)...]给取出来
@@ -238,4 +236,37 @@ data Point = Pt {pointx, pointy :: Float}
 
 ```hs
 norm (Pt {pointx = x, pointy = y}) = sqrt (x*x+y*y).
+```
+`size`
+```
+size :: Tree a -> Int
+size (EBranch xs) = sum [1 + size t | (_, t) <- xs]
+```
+`leaves`
+```
+leaves :: Tree a -> Int
+leaves (EBranch []) = 1
+leaves (EBranch xs) = sum [leaves t | (_, t) <- xs]
+```
+`insert`
+```
+insert :: Eq a => [a] -> Tree a -> Tree a
+insert [] tree = tree
+insert (x:xs) (EBranch branches) =
+  EBranch (insertBranch x xs branches)
+
+insertBranch :: Eq a => a -> [a] -> [(a, Tree a)] -> [(a, Tree a)]
+insertBranch x xs [] =
+  [(x, insert xs (EBranch []))]
+
+insertBranch x xs ((y,t):branches)
+  | x == y    = (y, insert xs t) : branches
+  | otherwise = (y,t) : insertBranch x xs branches
+```
+于是 `EBranch []`（类型为 `Tree a`）就是一个 leaf。下面这个函数构造出从 root 到各个 leaf 的所有 path 的 list：
+
+```haskell
+fullPaths :: Tree a -> [[a]]
+fullPaths (EBranch []) = [[]]
+fullPaths (EBranch forest) = [x:p | (x,t) <- forest, p <- fullPaths t]
 ```
