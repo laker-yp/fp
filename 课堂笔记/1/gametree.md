@@ -17,8 +17,8 @@ gameTree plays board = Node board [(m, gameTree plays b) | (m,b) <- plays board]
 * plays     只看“下一步” 返回的是(move,board)的list
 
 * gameTree  会把“所有后续步骤”都递归展开，返回的是GameTree board move，一棵树！
-
-**第一个输入**为(board -> [(move,board)])也就是plays
+### 关键词
+**第一个输入**为`(board -> [(move,board)])`也就是plays
 
 plays :: board -> [(move, board)]
 
@@ -28,17 +28,19 @@ plays board = [(m1, b1), (m2, b2), (m3, b3)]
 
   -意思是给你一个局面 board，返回所有合法走法and对应的新局面列表。
   
-**第二个输入**入为board 也就是初始(当前)局面
+**第二个输入**入为`board`也就是初始(当前)局面
+/
 
 **输出**：从这个初始局面开始的整棵game tree
-[(m, gameTree plays b) | (m,b) <- plays board]
+
+`[(m, gameTree plays b) | (m,b) <- plays board]`
 
 |右边是通过plays将初始board生成的一个个(m,b)，
 
 把(m,b)一个个丢到|左边的(m, gameTree plays b)对m,b进行处理
 
-处理方法：对每个 (m,b)，构造一个分支：m以及相应的分枝(从 b 开始继续生成的 game tree)
-
+处理方法：把走法 m 保留下来，然后对新局面 b 继续调用 gameTree plays b，生成子树
+### 流程
 1先调用 plays board
 
 2它会列出所有合法走法 (m,b)
