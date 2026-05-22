@@ -106,7 +106,10 @@ data Bool = False | True
    False :: Bool
    True  :: Bool
 ```
-一个 data type 上的 functions 可以很方便地通过对它的 constructors 做 **pattern-matching** 来定义。
+如果你用 data 定义了一个类型，那么你之后写function来处理这个类型时
+
+直接看它是由哪个 constructor 构造出来的，然后分别 **pattern-matching** （简单来说就是把每个construct列出来分别写pattern
+
 比如，在 Haskell 里，&&：
 ```hs
 (&&) :: Bool -> Bool -> Bool
