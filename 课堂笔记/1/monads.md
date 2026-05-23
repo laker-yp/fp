@@ -256,30 +256,50 @@ fib' n = x
 89
 ```
 
-## What monads are, how they work, and how to define new ones
+# Monads原理
 
 ### The general definition of the `Monad` class
 
 要定义 `Monad`，我们需要先定义 `Applicative`，而要定义 `Applicative`，又要先定义 `Functor`：
 
+首先知道`m a`带某种 effect/context/盒子 的 a，比如m是maybe，m a就可能是just a或nothing
+### 类型类Functor需要拥有`fmap`函数
+*  fmap = map函数的升级版，能处理【m a】
 ```hs
 class Functor f where
  fmap :: (a -> b) -> f a -> f b
+```
+`fmap :: (a -> b) -> f a -> f b`
 
+* 你给我一个普通函数 a -> b，我可以把它应用到 context 里面的值上
+* 比如说`(+1) :: Int -> Int`这个函数作为输入，fmap(+1) (Just 5)就等于Just 11，其中`contextm a`是【Maybe a】
+
+### 类型类Applicative需要拥有`pure`和`<*>`函数, 且满足Functor这个类型类
+*  `pure`= 把一个普通值放进 context 里面
+*  `<*>`和fmap差不多，不过fmap处理普通函数，`<*>`处理的函数也在 context 里面
+```hs
 class Functor f => Applicative f where
  pure  :: a -> f a
  (<*>) :: f (a -> b) -> f a -> f b
+```
+比如Just (+1)的类型就是 Maybe (Integer -> Integer)
 
+Just (+1) <*> Just 10 的第一个输入为带着maybe盒子的(+1)函数，第二个输入为带着maybe盒的int
+### 类型类Monads，满足Applicative，需要满足`reture`和`>>=`
+```hs
 class Applicative m => Monad m where
  return :: a -> m a
  (>>=)  :: m a -> (a -> m b) -> m b
 
  return = pure
 ```
+* `reture`就相当于pure
+* `>>=`把`m a`拆包提取a，放进一个处理普通a生成带盒b的f，得到带盒b
+ * safeDiv 10 2 >>= \x ->  --本身得到just 5，拆包得到5，放入x
+ * safeDiv x 5  这里的x是第一步得到的拆包后的5
 
 ### Example: the `list` monad
 
-这一部分有对应的 [video](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=4cd39e86-9b25-4340-8836-ac6d00c5daab)。
 
 List type former 在 `Functor` class 里有一个 instance，定义如下：
 ```hs
