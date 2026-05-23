@@ -295,10 +295,19 @@ class Applicative m => Monad m where
 ```
 * `reture`就相当于pure
 * `>>=`把`m a`拆包提取a，放进一个处理普通a生成带盒b的f，得到带盒b
+ * maybe时`Just x  >>= f = f x`
  * safeDiv 10 2 >>= \x ->  --本身得到just 5，拆包得到5，放入x
  * safeDiv x 5  这里的x是第一步得到的拆包后的5
-
-### Example: the `list` monad
+do的底层逻辑演示
+```hs
+do
+  x <- action1      action1 >>= \x ->
+  y <- action2      action2 >>= \y ->
+  pure (x+y)        pure (x+y)
+```
+# 各种Monads类型的原理
+。
+## Example: the `list` monad
 
 
 List type former 在 `Functor` class 里有一个 instance，定义如下：
@@ -328,10 +337,10 @@ Example. 下面这个 list 有 `2 * 5` 个 elements：
 最后，list monad 定义如下：
 ```hs
 (>>=) :: [a] -> (a -> [b]) -> [b]
-xs >>= f = [y | x <- xs, y <- f x]
+xs >>= f = [y | x <- xs, y <- f x]  --这个最重要
 ```
-
-### Example: the `Maybe` monad
+对 list 里的每个 x 都调用 f，最后把所有结果合并成一个 list。
+## Example: the `Maybe` monad
 
 这一部分有对应的 [video](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=01e4469d-9d09-4694-82ba-ac6d00c62c61)。
 
@@ -367,7 +376,7 @@ Nothing >>= f = Nothing
 Just x  >>= f = f x
 ```
 
-### Example: the `Writer` monad
+## Example: the `Writer` monad
 
 `Writer'` monad 已经被定义好了，所以我们定义自己的 version `Write'`。
 
@@ -472,7 +481,7 @@ modify' :: (s -> s) -> State' s ()
 modify' f = T(\s -> ((), f s))
 ```
 
-### Translating `do` notation to `>>=`
+## Translating `do` notation to `>>=`
 
 `do` notation 本质上只是 `>>=` 的 syntax sugar。例如，上面的 definition：
 ```hs
@@ -498,9 +507,9 @@ fibm'' n = fibm'' (n-2) >>= (\x ->
 
 
 
-## Monadic Parsing
+# Parsing
 
-### What is a parser?
+## What is a parser?
 
 _parser_ 是一个 program：它接收一个 characters string 作为 input，然后产生某种 tree，让这个 string 的 syntactic structure 变得明确。
 
