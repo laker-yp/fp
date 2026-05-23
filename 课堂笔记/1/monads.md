@@ -152,17 +152,9 @@ fib3 n | n <  0 = error ("invalid input " ++ show n) --处理负数
 
 Function `putStrLn` 只能在 `IO` monad 里使用。
 
-用IO边计算边打印就知道fib有多低效了
-```hs
-> fib3 11
-call with n = 11
-call with n = 9
-call with n = 7
-...
-89
-```
+用IO边计算边打印就知道fib有多低效了，输出一大堆中间的重复的流程
 
-*Puzzle.* 我们在 [another handout](Data1.md#an-aside-on-accumulators) 里已经见过使用 accumulators 的高效实现。这里还有另一种实现，使用 infinite lists，也就是 lazy lists，而不是 functions：
+*Puzzle.*data1的时候accumulators 的高效实现。另一种实现，使用 无限list，也就是 lazy lists：
 ```haskell
 fibs :: [Integer]
 fibs = 0 : 1 : zipWith (+) fibs (tail fibs)
@@ -170,19 +162,16 @@ fibs = 0 : 1 : zipWith (+) fibs (tail fibs)
 例如：
 ```hs
 > take 20 fibs
-[0,1,1,2,3,5,8,13,21,34,55,89,144,233,377,610,987,1597,2584,4181]
+[0,1,1,2,3,5, 。。。,4181]
 > fibs !! 100
 354224848179261915075
-> fibs !! 1000
-43466557686937456435688527675040625802564660517371780402481729089536555417949051890403879840079255169295922593080322634775209689623239873322471161642996440906533187938298969649928516003704476137795166849228875
 ```
-这些结果可以在一小部分秒内算出来。使用原始方法，想在太阳变成 red giant 并把地球烤焦之前算出第 100 个 Fibonacci number 都不可能，因为它是 exponential time。
+使用原始方法这辈子都不可能，因为它是 exponential time。
 
-### Producing a log of the computation with the `Writer` monad
+##  `Writer` monad
+生成计算日志computation log
 
-这一部分有对应的 [video](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=fff1cb18-2267-44a5-818a-ac6d00c4d49c)。
-
-我们想知道 recursive calls 的 arguments，像上面那样，但不是把它们 print 出来，而是收集到一个 log 里。这个 log 是一个 integers list。为此我们使用 `Writer` monad，以及它对应的 function `tell`：
+其实就像IO那样记录recursive的每一个过程，但不是把它们 print 出来，而是收集到一个list(也叫log）
 ```haskell
 fib4 :: Integer -> Writer [Integer] Integer
 fib4 n | n <  0 = error ("invalid input " ++ show n)
@@ -194,17 +183,20 @@ fib4 n | n <  0 = error ("invalid input " ++ show n)
                     y <- fib4 (n-1)
                     pure (x+y)
 ```
-要从 `Writer` monad 的 element 中提取 result，我们使用 function `runWriter`：
+`runWriter`从 `Writer` monad 的 element 中提取 resul
 ```hs
 > runWriter (fib4 11)
-(89,[11,9,7,5,3,2,4,2,3,2,6,4,2,3,2,5,3,2,4,2,3,2,8,6,4,2,3,2,5,3,2,4,2,3,2,7,5,3,2,4,2,3,2,6,4,2,3,2,5,3,2,4,2,3,2,10,8,6,4,2,3,2,5,3,2,4,2,3,2,7,5,3,2,4,2,3,2,6,4,2,3,2,5,3,2,4,2,3,2,9,7,5,3,2,4,2,3,2,6,4,2,3,2,5,3,2,4,2,3,2,8,6,4,2,3,2,5,3,2,4,2,3,2,7,5,3,2,4,2,3,2,6,4,2,3,2,5,3,2,4,2,3,2])
+(89,[11....0])
 ```
 
-### Counting the number of recursive calls with the `State` monad
+## `State` monad
+计算递归的次数
 
-这一部分有对应的 [video](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=e3ea5ff5-1616-40a5-aeb9-ac6d00c53ed3)。
+模拟C、Java里的变量count++
 
-State monad 可以模拟 imperative languages 中的 mutable variables，比如 C、Java、Python 里的变量。在我们的例子里，state 是一个 `Int`，result 还是之前的 `Integer`。在 recursive calls 中，我们通过给 `Int` 加 1 来 modify state：
+在我们的例子里，state 是一个 `Int`
+
+result 还是之前的 `Integer`。在 recursive calls 中，我们通过给 `Int` 加 1 来改变state：
 ```haskell
 fib5 :: Integer -> State Int Integer
 fib5 n | n <  0 = error ("invalid input " ++ show n)
@@ -216,14 +208,15 @@ fib5 n | n <  0 = error ("invalid input " ++ show n)
                     y <- fib5 (n-1)
                     pure (x+y)
 ```
-我们使用 function `runState` 来 initialize state，在这里初始值是 `0`，然后运行 computation：
+`function `runState` 用来 initialize state，在这里初始值是 `0`意思是从0开始计算，然后运行 computation：
 ```hs
 > runState (fib5 11) 0
 (89,143)
 ```
-这表示第 11 个 Fibonacci number 是 89，并且 counter 被 incremented 了 143 次，这就 measure 了 recursive calls 的数量。
+计算结果是 89
 
-<a name="fibstate"></a>
+counter 被++了 143 次 = recursive calls 的次数
+
 ### Using the state monad to get another algorithm for the Fibonacci function
 
 考虑下面这个 Java method，用来计算 non-negative `n` 的第 `n` 个 Fibonacci number。如果 `n` 是 negative，它会无限 loop：
@@ -253,23 +246,13 @@ fib' n = x
 
   ((),(x,y)) = runState (f n) (0,1)
 ```
-这很快也很 efficient，并且等价于 [another handout](data1.md#accum) 中讨论过的 accumulators 方法。
+这很快也很 efficient，并且等价于 [data1] 中讨论过的 accumulators 方法。
 ```hs
 > fib' 11
 89
-> fib' 100
-354224848179261915075
-> fib' 1000
-43466557686937456435688527675040625802564660517371780402481729089536555417949051890403879840079255169295922593080322634775209689623239873322471161642996440906533187938298969649928516003704476137795166849228875
 ```
 
-### Topics not discussed here
-
-可以用 monad transformers 来 combine monads，从而 combine effects。比如把 `Maybe` monad 里的 `Nothing` 表示的 errors，和 `State s` monad 里的 states `s` 结合起来。不过这个主题本 module 不讲。
-
 ## What monads are, how they work, and how to define new ones
-
-这一部分有对应的 [video](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=4cd39e86-9b25-4340-8836-ac6d00c5daab)。
 
 ### The general definition of the `Monad` class
 
