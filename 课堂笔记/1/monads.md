@@ -60,11 +60,14 @@ fib n = fib (n-2) + fib (n-1)
 89
 ```
 我们把 function `fib` 改写成 *monadic form*，用到 `pure` 和 `do`：
+
+不过这里默认的还是普通的Int，因为m还没被具体定义
 ```haskell
+--                输入一个 Int，然后返回一个被某种 Monad m
 fibm :: Monad m => Integer -> m Integer
 fibm 0 = pure 0
 fibm 1 = pure 1
-fibm n = do
+fibm n = do                --比如在这里do就是把最后那一行的递归case给拆解，从上到下依次运行
           x <- fibm (n-2)
           y <- fibm (n-1)
           pure (x+y)
@@ -80,19 +83,18 @@ Just 89
 > fibm 11 :: [Integer]
 [89]
 ```
-在这两个 examples 里，我们使用了两个不同的 "monads"：
+意思是使用不同的 "monads"：
 
   * `m a = Maybe a`
   * `m a = [a]`
-
-对于任意给定 type `a` 都可以这样理解，然后这里我们考虑的是 `a = Integer`。
+就会得到不同的结果（把a放进不同context）
 
 对应地：
 
   * `pure x = Just x`
   * `pure x = [x]`
 
-我们可以把 `fibm` specialize 成下面两个 functions，分别对应上面两种 `m` 的选择。Haskell 会自动 infer 出来：
+我们可以把 `fibm` specialize 成下面两个 functions，分别对应上面 `m` 的两种选择。Haskell 会自动 infer 出来：
 ```haskell
 fib_maybe :: Integer -> Maybe Integer
 fib_maybe = fibm
@@ -103,8 +105,8 @@ fib_list = fibm
 Function `fib_list` 也可以用 list comprehension notation 等价地写成：
 ```haskell
 fib_list' :: Integer -> [Integer]
-fib_list' 0 = pure 0 -- equivalent to [0]
-fib_list' 1 = pure 1 -- equivalent to [1]
+fib_list' 0 = pure 0 -- 把0放进context，也就是[0]
+fib_list' 1 = pure 1 -- [1]
 fib_list' n = [ x+y | x <- fib_list' (n-2), y <- fib_list' (n-1)]
 ```
 对于 lists，do-notation 和 list-comprehension notation 是 equivalent 的，它们会 "[desugar](https://en.wikipedia.org/wiki/Syntactic_sugar)" 成同样的 code，后面会解释。
