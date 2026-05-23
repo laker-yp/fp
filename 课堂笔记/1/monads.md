@@ -1,6 +1,6 @@
 # Monads
 
-## Organization
+# 序幕
 
 1. 我们先讨论如何 *use* 已经存在的 monads。
 
@@ -20,24 +20,9 @@ import Control.Monad.State
 import Control.Applicative
 import Data.Char
 ```
-## Motivation
+# Motivation
 
-考虑下面这个 Java program：
-```java
-class Factorial {
-
-int fac (int n) {
-  int y = 1;
-  while (n > 1} {
-   System.out.println("n = " + n);
-   y = y * n;
-   n--;
-   }
-  }
-  return y;
-}
-```
-这个 method 计算一个 number 的 factorial，**同时**它还有一个所谓的 side-effect，也就是打印出 `n` 不断变化的 value。
+考虑下面这个 Java program：略
 
 在 Haskell 里，一个 type 为：
 ```hs
@@ -45,6 +30,7 @@ fac :: Int -> Int
 ```
 的 function 按设计不能有 side-effects。Haskell 的 functions 是 "pure" 的，也就是没有 side-effects。不过，如果我们确实想要 side-effect，也可以做到。我们只需要改变 function 的 type，明确告诉 Haskell 这个 function 会带有这种 effect：
 ```hs
+--它不是直接返回 Int，而是返回一个带 IO 副作用的计算过程，最后结果是 Int。
 fac :: Int -> IO Int
 fac n | n == 0    = pure 1
       | otherwise = do
@@ -52,15 +38,16 @@ fac n | n == 0    = pure 1
                      y <- fac (n-1)
                      pure (y * n)
 ```
+`pure`相当于老版的return，把a放进a的context里面，比如maybe a的时候，pure 3就把3放进得到just 3
+
+`<-`意思是把右边的context拆开得到纯元素比如`x <- just` 5那么x就等于5
+
 这里 `IO` 是一个 **monad**。不同 monads 用来表示不同种类的 side-effects。Monads 也可以被组合起来，不过这个 module 不讲这个主题。
 
-## Using monads
-
-这一部分有对应的 [video](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=594c51f2-c1c3-455d-b92c-ac6d00c4384b)。
-
+# Using monads
 ### Running example
 
-考虑下面这个 [Fibonacci](https://en.wikipedia.org/wiki/Fibonacci_number) function：
+考虑下面这个 Fibonacci function：
 ```haskell
 fib :: Integer -> Integer
 fib 0 = 0
