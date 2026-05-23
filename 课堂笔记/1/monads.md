@@ -158,6 +158,10 @@ Function `putStrLn` 只能在 `IO` monad 里使用。
 ```haskell
 fibs :: [Integer]
 fibs = 0 : 1 : zipWith (+) fibs (tail fibs)
+
+` zipWith (+) fibs (tail fibs)`意思是把`fibs`和`tail fibs`用+来zip
+
+比如[1,1,2,3]和[1,2,3,5]用+来zip就得到[2,3,5,8...],最后再放到`0 : 1 :`前面
 ```
 例如：
 ```hs
@@ -178,7 +182,7 @@ fib4 n | n <  0 = error ("invalid input " ++ show n)
        | n == 0 = pure 0
        | n == 1 = pure 1
        | n >= 2 = do
-                    tell [n]
+                    tell [n]  --每一次都把当前的n放进这个list
                     x <- fib4 (n-2)
                     y <- fib4 (n-1)
                     pure (x+y)
@@ -203,7 +207,7 @@ fib5 n | n <  0 = error ("invalid input " ++ show n)
        | n == 0 = pure 0
        | n == 1 = pure 1
        | n >= 2 = do
-                    modify (+1)
+                    modify (+1)  --每一次都对counter进行++
                     x <- fib5 (n-2)
                     y <- fib5 (n-1)
                     pure (x+y)
