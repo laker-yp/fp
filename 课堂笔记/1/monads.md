@@ -44,21 +44,17 @@ fac n | n == 0    = pure 1
 
 这里 `IO` 是一个 **monad**。不同 monads 用来表示不同种类的 side-effects。Monads 也可以被组合起来，不过这个 module 不讲这个主题。
 
-# Using monads
-### Running example
+# monads的使用
 
-考虑下面这个 Fibonacci function：
+### 最基础的fib
+也有list comprehension notation版本的，略
 ```haskell
 fib :: Integer -> Integer
 fib 0 = 0
 fib 1 = 1
 fib n = fib (n-2) + fib (n-1)
 ```
-例如：
-```hs
-> fib 11
-89
-```
+### monads版本的fib（未具体定义的骨架）
 我们把 function `fib` 改写成 *monadic form*，用到 `pure` 和 `do`：
 
 不过这里默认的还是普通的Int，因为m还没被具体定义
@@ -67,15 +63,11 @@ fib n = fib (n-2) + fib (n-1)
 fibm :: Monad m => Integer -> m Integer
 fibm 0 = pure 0
 fibm 1 = pure 1
-fibm n = do                --比如在这里do就是把最后那一行的递归case给拆解，从上到下依次运行
-          x <- fibm (n-2)
+fibm n = do                --do把多个 Monad actions 按顺序串起来运行，
+          x <- fibm (n-2)  --用 <- 提取出右边里面的结果
           y <- fibm (n-1)
           pure (x+y)
 ```
-我们会用这个 example 来说明几个有用的 monads。
-
-### The `Maybe` and list monads
-
 我们先通过运行来理解 `fibm` 做了什么：
 ```hs
 > fibm 11 :: Maybe Integer
@@ -83,7 +75,7 @@ Just 89
 > fibm 11 :: [Integer]
 [89]
 ```
-意思是使用不同的 "monads"：
+意思是同样的fibm使用不同的 "monads"类型，结果的context就会不一样：
 
   * `m a = Maybe a`
   * `m a = [a]`
@@ -93,82 +85,48 @@ Just 89
 
   * `pure x = Just x`
   * `pure x = [x]`
-
-我们可以把 `fibm` specialize 成下面两个 functions，分别对应上面 `m` 的两种选择。Haskell 会自动 infer 出来：
+### The `Maybe` and list monads
+回顾recall fibm骨架版
+```haskell
+fibm :: Monad m => Integer -> m Integer
+fibm 0 = pure 0  --每个人的定义不同
+fibm 1 = pure 1
+fibm n = do               
+          x <- fibm (n-2)  
+          y <- fibm (n-1)
+          pure (x+y)
+```
+分别给上面的骨架赋予不同的monads类型
 ```haskell
 fib_maybe :: Integer -> Maybe Integer
 fib_maybe = fibm
 
-fib_list :: Integer -> [Integer]
+fib_list :: Integer -> [Integer] --也可以用list comprehension【略】
 fib_list = fibm
 ```
-Function `fib_list` 也可以用 list comprehension notation 等价地写成：
-```haskell
-fib_list' :: Integer -> [Integer]
-fib_list' 0 = pure 0 -- 把0放进context，也就是[0]
-fib_list' 1 = pure 1 -- [1]
-fib_list' n = [ x+y | x <- fib_list' (n-2), y <- fib_list' (n-1)]
-```
-对于 lists，do-notation 和 list-comprehension notation 是 equivalent 的，它们会 "[desugar](https://en.wikipedia.org/wiki/Syntactic_sugar)" 成同样的 code，后面会解释。
-
-实际上，由于上面使用了 pragma `{-# LANGUAGE MonadComprehensions #-}`，function `fibm` 也可以等价地写成：
-```haskell
-fibm' :: Monad m => Integer -> m Integer
-fibm' 0 = pure 0
-fibm' 1 = pure 1
-fibm' n = [ x+y | x <- fibm' (n-2), y <- fibm' (n-1)]
-```
-虽然 list comprehension notation 看起来很好，但我们会继续使用等价的 `do` notation。
-
 ### What are monads good for?
+`fib`变成`fibm` 之后，一个很有用的事情是：把它分配到不同 monads，然后进行修改，从而得到不同的 "effects"
 
-把原来的 function `fib` 变成 monadic transformation `fibm` 之后，我们能做什么？一个很有用的事情是：把它 specialize 到不同 monads，然后进行修改，从而得到不同的 "effects"。
+比如原本只能输出`21`，现在可以`[21]`也可以`just 21`
 
-### Accounting for errors with the `Maybe` monad
-
-这一部分有对应的 [video](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=8c5914d4-759a-4f1d-baee-ac6d00c438b0)。
-
-我们的 Fibonacci function 对 negative numbers 没有定义，所以我们想用 `Nothing` 明确表示 undefinedness。一个直接写法如下：
-```haskell
-fib1 :: Integer -> Maybe Integer
-fib1 n | n <  0  = Nothing
-       | n == 0  = Just 0
-       | n == 1  = Just 1
-       | n >= 2  = case fib1 (n-2) of
-                     Nothing -> Nothing
-                     Just x  -> case fib1 (n-1) of
-                                  Nothing -> Nothing
-                                  Just y  -> Just (x+y)
-```
-注意，因为这个 function 是 recursive 的，所以 recursive calls 的 return values 可能出错，我们必须显式地处理并传播这些 errors。这很麻烦，而且让 code 变得很难读。我们可以改造 `fibm`，得到一个更清楚的 definition：
+-
+### 整合到一起写（ 当m = Maybe a ）
+有一个麻烦的版本用case的我把他省【略】了
 ```haskell
 fib1' :: Integer -> Maybe Integer
-fib1' n | n <  0 = Nothing
-        | n == 0 = pure 0
+fib1' n | n <  0 = Nothing  --处理负数
+        | n == 0 = pure 0  
         | n == 1 = pure 1
         | n >= 2 = do
                      x <- fib1' (n-2)
                      y <- fib1' (n-1)
                      pure (x+y)
 ```
-后面我们会看到，`fib1` 和 `fib1'` 会 desugar 成同样的 code。第二个写法的好处是 error propagation 会自动完成。后面会解释它 [under the hood](https://www.definitions.net/definition/under+the+hood) 是怎么工作的。
-
-```hs
-> fib1' (-1)
-Nothing
-> fib1' 11
-Just 89
-```
-
-### Accounting for errors with the list monad
-
-这一部分有对应的 [video](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=fee642ca-112d-47de-9d68-ac6d00c4a004)。
-
-我们用 `[]` 代替 `Nothing`，用 `[x]` 代替 `Just x`。我们的 textbook 经常用这个 trick，这样就能用 list comprehension notation，而不用 `do` notation，也不用 pragma `{-# LANGUAGE MonadComprehensions #-}` 或者解释 monads。
-
+### 整合到一起写（ 当m = list ）
+和上面的区别就是 `[]` 代替 `Nothing`，用 `[x]` 代替 `Just x`
 ```haskell
 fib2 :: Integer -> [Integer]
-fib2 n | n <  0 = []
+fib2 n | n <  0 = []    -处理负数
        | n == 0 = pure 0
        | n == 1 = pure 1
        | n >= 2 = do
@@ -176,31 +134,25 @@ fib2 n | n <  0 = []
                     y <- fib2 (n-1)
                     pure (x+y)
 ```
-结果是：
-```hs
-> fib2 (-1)
-[]
-> fib2 11
-[89]
-```
 
-### Printing while computing, for example for debugging
+### 整合到一起写（ 当m = IO ）
 
-当我们想在 computation 中进行 input/output，同时最后还要交付一个 result 时，就使用 `IO` monad：
 ```haskell
 fib3 :: Integer -> IO Integer
-fib3 n | n <  0 = error ("invalid input " ++ show n)
+fib3 n | n <  0 = error ("invalid input " ++ show n) --处理负数
        | n == 0 = pure 0
        | n == 1 = pure 1
        | n >= 2 = do
-                    putStrLn ("call with n = " ++ show n)
+                    putStrLn ("调用 n = " ++ show n) --多了这一行输出打印
                     x <- fib3 (n-2)
                     y <- fib3 (n-1)
                     pure (x+y)
 ```
+当我们想在 computation 中进行 input/output，同时最后还要交付一个 result 时，就使用 `IO` monad：
+
 Function `putStrLn` 只能在 `IO` monad 里使用。
 
-现在我们可以看出：我们计算 Fibonacci function 的 general strategy 非常低效，因为之前已经算过的 function values 会被一次又一次重复计算：
+用IO边计算边打印就知道fib有多低效了
 ```hs
 > fib3 11
 call with n = 11
