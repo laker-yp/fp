@@ -285,29 +285,20 @@ string (x:xs)     = do char x
 > parse (some digit) "abc"
 []
 ```
-
-现在我们可以写几个 parser（解析器），专门用来从字符串里识别并取出三种东西：
+## 处理string结构
+现在我们可以写几个 parser（解析器），用来从字符串里识别并取出三种东西：
 * 变量名/标识符 identifiers
 * 自然数 natural numbers
 * 空白 spacing。
-
+  
+检查开头是否小写
 ```haskell
 ident :: Parser String
-ident = do x <- lower
-           xs <- many alphanum
+ident = do x <- lower         --第一个字符必须是小写
+           xs <- many alphanum--后面可以跟 0 个或多个阿拉伯数字(字符形式)
            pure (x:xs)
-
-nat :: Parser Int
-nat = do xs <- some digit
-         pure (read xs)
-
-space :: Parser ()
-space = do many (sat isSpace)
-           pure ()
 ```
-
-例如：
-
+例子
 ```hs
 > parse ident "abc def"
 [("abc"," def")]
@@ -318,9 +309,13 @@ space = do many (sat isSpace)
 > parse space "   abc"
 [((),"abc")]
 ```
-
+检查是否有只扫一个数字
+```hs
+nat :: Parser Int
+nat = do xs <- some digit --至少一个 digit
+         pure (read xs)
+```
 使用 `nat` parser，我们可以定义 integer values 的 parser：
-
 ```haskell
 int :: Parser Int
 int = do char '-'
@@ -337,6 +332,16 @@ int = do char '-'
 
 > parse int "4567 abc"
 [(4567," abc")]
+```
+检查    
+```hs
+space :: Parser ()
+space = do many (sat isSpace)--把空格处理掉
+           pure ()  --直接吃掉空格
+```
+```
+>parse space "   abc"
+[((),"abc")]
 ```
 
 # Handling Spacing
