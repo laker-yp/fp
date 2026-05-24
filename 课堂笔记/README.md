@@ -17,7 +17,7 @@
 * 12[lazy1](1/lazy1.md)
 * 13[lazy2](1/lazy2.md)
 * 14[Monads](1/monads.md)
-
+* 15[Paring](1/Paring.md)
 
 
 [](1/.md)
