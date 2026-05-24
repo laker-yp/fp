@@ -164,8 +164,9 @@ instance Monad Parser where
                           []        -> []
                           [(v,out)] -> parse (f v) out)
 ```
+如果 parser `p` 应用到 input string `inp` 上失败，那么 `p >>= f` 也失败
 
-也就是说，如果 parser `p` 应用到 input string `inp` 上失败，那么 `p >>= f` 也失败；否则，把 function `f` 应用到 result value `v` 上，得到另一个 parser `f v`，再把它应用到第一个 parser 产生的 output string `out` 上，得到最终 result。
+否则，把 `f` 应用到result`v` 上，得到parser `f v`，再把rest string `out`接上，得到最终 result。
 
 现在我们可以用 **do notation** 来 sequence parsers 并处理它们的 result values。例如：
 
@@ -177,20 +178,20 @@ three = do
   z <- item
   pure (x,z)
 ```
-
-另一种自然的 parser combination 是：先把一个 parser 应用到 input string 上；如果失败，就把另一个 parser 应用到同一个 input 上。这里我们可以用 `empty` 和 choice operator `<|>` 实现这个想法。`empty` parser 无论 input 是什么都失败，而 choice operator 如果第一个 parser 成功，就返回它的 result；否则对同一个 input 使用第二个 parser：
+### 处理一些error情况
+先把一个 parser 应用到 input string 上；如果失败，就把另一个 parser 应用到同一个 input 上。这里我们可以用 `empty` 和 choice operator `<|>` 实现这个想法。`empty` parser 无论 input 是什么都失败，而 choice operator 如果第一个 parser 成功，就返回它的 result；否则对同一个 input 使用第二个 parser：
 
 ```haskell
 instance Alternative Parser where
   -- empty :: Parser a
-  empty = P (\inp -> [])
+  empty = P (\inp -> [])  --相当于永远失败
 
   -- (<|>) :: Parser a -> Parser a -> Parser a
-  p <|> q = P (\inp -> case parse p inp of
-                          []        -> parse q inp
+  p <|> q = P (\inp -> case parse p inp of  --先试 p
+                          []        -> parse q inp --如果 p 失败，再试 q
                           [(v,out)] -> [(v,out)])
 ```
-
+* 就相当于 or
 例如：
 
 ```hs
@@ -204,18 +205,16 @@ instance Alternative Parser where
 [('d',"abc")]
 ```
 
-### Derived Primitives and Handling Spacing
+# Derived Primitives 衍生item
 
 使用目前定义的三个 basic parsers，也就是 `item`、`pure` 和 `empty`，再加上 sequencing 和 choice，我们可以定义其他 useful parsers。例如，下面定义 parser `sat p`，它 parse 满足某个 predicate `p` 的 single character：
 
 ```haskell
 sat :: (Char -> Bool) -> Parser Char
-sat p = do x <- item
-           if p x then pure x else empty
+sat p = do x <- item  --先吃一个字符，item会经常用，表示处理第一个字符
+           if p x then pure x else empty  --p是判断函数
 ```
-
-类似地，我们可以定义下面这些 parsers，用来 parse single digits、lower-case letters、upper-case letters、arbitrary letters、alphanumeric characters 和 specific characters。
-
+拥有了能检查一个函数是否满足p的function`sat`, 就可以延申出下面
 ```haskell
 digit :: Parser Char
 digit = sat isDigit
@@ -230,23 +229,25 @@ letter :: Parser Char
 letter = sat isAlpha
 
 alphanum :: Parser Char
-alphanum = sat isAlphaNum
+alphanum = sat isAlphaNum --阿拉伯数字
 
 char :: Char -> Parser Char
 char x = sat (==x)
 ```
 
-例如：
+例如：对最后一个做示范
 
 ```hs
-> parse (char 'a') "abc"
+> parse (char 'a') "abc" --检查第一个char是不是a
 [('a',"bc")]
 
 > parse (char 'b') "abc"
 []
 ```
 
-使用 `char`，我们可以定义 parser `string xs`，用来 parse characters string xs，并把 string 本身作为 result value 返回：
+使用 `char`，我们可以定义 parser `string xs`，用来 parse xs(string)
+
+并把 string 本身作为 result value 返回：
 
 ```haskell
 string :: String -> Parser String
@@ -266,7 +267,13 @@ string (x:xs)     = do char x
 []
 ```
 
-我们也可以使用来自 `Alternative` class definition 的 `many` 和 `some` parsers。`many p` 和 `some p` 会尽可能多次应用给定 parser `p`，直到它失败为止，并把每次成功的 result values 放进一个 list 返回。`many` 允许 zero or more 次应用，而 `some` 要求至少成功一次。例如：
+ `Alternative`  的 `many` 和 `some` parsers来处理string
+ 
+ `many p` 和 `some p` 会尽可能多次应用给定 parser `p`，直到它失败为止
+ 
+ 并把每次成功的 result values 放进一个 list 返回
+ 
+ `many` 允许0或多次应用，而 `some` 要求至少成功一次。例如：
 
 ```hs
 > parse (many digit) "123abc"
@@ -279,7 +286,10 @@ string (x:xs)     = do char x
 []
 ```
 
-现在，我们可以定义 parsers，用来 parse identifiers、natural numbers 和 spacing。Identifier 是 lower-case letter 后面跟着 zero or more alphanumeric characters；natural number 是 one or more digits；spacing 是 zero or more space、tab 和 newline characters。
+现在我们可以写几个 parser（解析器），专门用来从字符串里识别并取出三种东西：
+* 变量名/标识符 identifiers
+* 自然数 natural numbers
+* 空白 spacing。
 
 ```haskell
 ident :: Parser String
@@ -329,7 +339,7 @@ int = do char '-'
 [(4567," abc")]
 ```
 
-#### Handling Spacing
+# Handling Spacing
 
 大多数 real-life parsers 都允许 basic tokens 周围自由使用 spacing。例如，strings `1+2` 和 `1 + 2` 会被以同样的方式 parsed。我们可以定义一个新的 primitive，它会在应用某个 token parser 之前和之后忽略任意 spaces：
 
