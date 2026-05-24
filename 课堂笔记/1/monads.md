@@ -263,7 +263,7 @@ fib' n = x
 要定义 `Monad`，我们需要先定义 `Applicative`，而要定义 `Applicative`，又要先定义 `Functor`：
 
 首先知道`m a`带某种 effect/context/盒子 的 a，比如m是maybe，m a就可能是just a或nothing
-### 类型类Functor需要拥有`fmap`函数
+### 类型类Functor--有`fmap`函数
 *  fmap = map函数的升级版，能处理【m a】
 ```hs
 class Functor f where
@@ -274,7 +274,7 @@ class Functor f where
 * 你给我一个普通函数 a -> b，我可以把它应用到 context 里面的值上
 * 比如说`(+1) :: Int -> Int`这个函数作为输入，fmap(+1) (Just 5)就等于Just 11，其中`contextm a`是【Maybe a】
 
-### 类型类Applicative需要拥有`pure`和`<*>`函数, 且满足Functor这个类型类
+### 类型类Applicative--有`pure`和`<*>`函数, 继承Functor
 *  `pure`= 把一个普通值放进 context 里面
 *  `<*>`和fmap差不多，不过fmap处理普通函数，`<*>`处理的函数也在 context 里面
 ```hs
@@ -285,7 +285,7 @@ class Functor f => Applicative f where
 比如Just (+1)的类型就是 Maybe (Integer -> Integer)
 
 Just (+1) <*> Just 10 的第一个输入为带着maybe盒子的(+1)函数，第二个输入为带着maybe盒的int
-### 类型类Monads，满足Applicative，需要满足`reture`和`>>=`
+### 类型类Monads--有`reture`和`>>=`继承Applicative，
 ```hs
 class Applicative m => Monad m where
  return :: a -> m a
@@ -307,7 +307,7 @@ do
 ```
 # 各种Monads类型的原理
 。
-## Example: the `list` monad
+## `list` monad原理
 
 
 List type former 在 `Functor` class 里有一个 instance，定义如下：
@@ -325,7 +325,11 @@ List type former 在 `Applicative` class 里也有一个 instance，定义如下
 ```hs
 instance Applicative [] where
  pure x = [x]
- gs <*> xs = [ g x | g <- gs, x <- xs]
+ gs <*> xs = [ g x | g <- gs, x <- xs] --分别把gs的g提出来，xs的x提出来，依次g x
+--可以写成
+gs >>= \g ->
+xs >>= \x ->
+pure (g x)
 ```
 Example. 下面这个 list 有 `2 * 5` 个 elements：
 ```hs
@@ -340,9 +344,7 @@ Example. 下面这个 list 有 `2 * 5` 个 elements：
 xs >>= f = [y | x <- xs, y <- f x]  --这个最重要
 ```
 对 list 里的每个 x 都调用 f，最后把所有结果合并成一个 list。
-## Example: the `Maybe` monad
-
-这一部分有对应的 [video](https://bham.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=01e4469d-9d09-4694-82ba-ac6d00c62c61)。
+##  `Maybe` monad原理
 
 `Maybe` type former 在 `Functor` class 里有一个 instance，定义如下：
 ```hs
@@ -376,7 +378,7 @@ Nothing >>= f = Nothing
 Just x  >>= f = f x
 ```
 
-## Example: the `Writer` monad
+## `Writer` monad原理
 
 `Writer'` monad 已经被定义好了，所以我们定义自己的 version `Write'`。
 
@@ -403,7 +405,7 @@ instance Applicative Writer' where
                      pure (f x)
 ```
 
-## Example: the `State` monad
+## `State` monad原理
 
 `State` monad 已经被定义好了，所以我们定义自己的 version `State'`。
 
@@ -481,7 +483,7 @@ modify' :: (s -> s) -> State' s ()
 modify' f = T(\s -> ((), f s))
 ```
 
-## Translating `do` notation to `>>=`
+##  `do` 和 `>>=` 的转化
 
 `do` notation 本质上只是 `>>=` 的 syntax sugar。例如，上面的 definition：
 ```hs
@@ -502,10 +504,6 @@ fibm'' n = fibm'' (n-2) >>= (\x ->
            fibm'' (n-1) >>= (\y ->
            pure (x+y)))
 ```
-
-更多细节可以看 textbook 和网站 [All About Monads](https://wiki.haskell.org/All_About_Monads)。
-
-
 
 # Parsing
 
@@ -530,13 +528,14 @@ _parser_ 是一个 program：它接收一个 characters string 作为 input，�
 在 Haskell 里，parser 可以看成一个 function：它接收 string，并产生 tree。于是我们可以定义 parser type：
 
 ```hs
-type Parser = String -> Tree
+type Parser = String -> Tree  --起别名
 ```
 
 一般来说，parser 不一定会 consume 完全部 input string，所以还可以把没有被 consume 的 input string 一起返回：
 
 ```hs
 type Parser = String -> (Tree, String)
+                                ↑未处理的rest
 ```
 
 类似地，parser 不一定总能成功 parse input，所以我们可以进一步 generalise parser type，让它返回 results list。返回 empty list 表示 failure，返回 singleton list 表示 success。
