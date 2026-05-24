@@ -1,5 +1,8 @@
 # Parsing
-
+```
+import Control.Applicative --applicative functors
+import Data.Char --characters
+```
 ## What is a parser?
 
 _parser_ 是一个 program：它接收一个 characters string 作为 input，然后产生某种 tree，让这个 string 的 syntactic structure 变得明确。
@@ -45,34 +48,31 @@ type Parser a = String -> [(a, String)]
 
 上面这个 declaration 的意思是：_一个 type 为 **a** 的 parser，是一个接收 input string 并产生 results list 的 function；每个 result 都是一个 pair，包含一个 type 为 **a** 的 result value 和一个 output string_。
 
-### Basic Definitions
+# Definitions
+用 newtype 重新定义它，并给一个 **P**：
 
-实现 parser 会用到下面两个 standard libraries：一个处理 applicative functors，一个处理 characters：
-
-```hs
-import Control.Applicative
-import Data.Char
-```
-
-为了让 Parser type 可以成为 classes 的 instances，我们先用 newtype 重新定义它，并给一个 dummy constructor，叫 **P**：
+(newtype其实就是只有一个parameter的data，在这的parameter是一个函数)
 
 ```haskell
 newtype Parser a = P (String -> [(a, String)])
 ```
 
-这种 Parser 可以通过一个简单移除 dummy constructor 的 function 应用到 input string 上：
+`Parser`：拆包装的函数，把数据构造器里面的函数取出来
 
 ```haskell
 parse :: Parser a -> String -> [(a, String)]
-parse (P p) inp = p inp
+parse (P p) inp = p inp 
 ```
+* 给左边一个 parser`p`，一个 input string`inp`
+
+* 右边把 parser 里的 function`p` 拿出来，应用到 input`inp`上
 
 我们定义第一个 parsing primitive function，叫做 `item`。如果 input string 是 empty，它失败；否则它用第一个 character 作为 result value，并成功：
 
 ```haskell
 item :: Parser Char
 item = P (\inp -> case inp of
-                     []     -> []
+                     []     -> []  --失败直接返回[]，rest也不要
                      (x:xs) -> [(x,xs)])
 ```
 
@@ -81,17 +81,20 @@ Item parser 是所有其他 consume input characters 的 parsers 的 basic build
 例如：
 ```hs
 > parse item ""
-[]
+[] 
 
 > parse item "abc"
 [('a',"bc")]
 ```
-
+# 结合monads
 ### Sequencing and Making Choice between Parsers
+因为parser有context`p`，拆包`paese`的过程，使用可以用到 monads
 
-现在我们会让 parser type 成为 functor、applicative 和 monad classes 的 instance，这样就可以用 **do notation** 把 parsers 按顺序 combine 起来。我们也会考虑 parser 可能 parsing failure 的情况。
+让 parser type 成为 functor、applicative 和 monad 这几个类型类的 instance
 
-先让 `Parser` type 成为 functor：
+这样就可以用 **do notation** 把 parsers 按顺序结合起来了
+
+## `Parser` functor
 
 ```haskell
 instance Functor Parser where
@@ -100,8 +103,8 @@ instance Functor Parser where
                            []        -> []
                            [(v,out)] -> [(g v, out)])
 ```
-
-也就是说，如果 parser 成功，`fmap` 会把一个 function 应用到 parser 的 result value 上；如果 parser 失败，就传播 failure。
+* parser失败，就 []
+* parser成功，`fmap` 会把function`g` 应用到 parser 的 result`v`,得到[(g v, out)])
 
 例如：
 ```hs
@@ -112,12 +115,12 @@ instance Functor Parser where
 []
 ```
 
-现在，我们可以让 `Parser` type 成为 applicative functor：
+## `Parser` applicative
 
 ```haskell
 instance Applicative Parser where
   -- pure :: a -> Parser a
-  pure v = P (\inp -> [(v,inp)])
+  pure v = P (\inp -> [(v,inp)]) --把v作为result，并且不消耗任何 input,这个parser永真
 
   -- <*> :: Parser (a -> b) -> Parser a -> Parser b
   pg <*> px = P (\inp -> case parse pg inp of
@@ -125,15 +128,14 @@ instance Applicative Parser where
                    [(g, out)] -> parse (fmap g px) out)
 
 ```
-
-这里 applicative function `pure` 会把一个 value 转成一个 parser。这个 parser 总是成功，并且把这个 value 当作 result，而且不 consume input string：
-
+对于pure
 ```hs
 > parse (pure 1) "abc"
 [(1,"abc")]
 ```
-
-Applicative primitive `<*>` 的意思是：一个 parser 返回 function，另一个 parser 返回 argument，组合后得到一个 parser，它返回 function applied to argument 的结果；并且只有所有 components 都成功时它才成功。例如，一个 consume 三个 characters、丢弃第二个、返回第一个和第三个作为 pair 的 parser 可以用 applicative style 定义：
+ `<*>` 的意思是：一个 parser 返回 function，另一个 parser 返回 argument，组合后得到一个 parser，它返回 function applied to argument 的结果；并且只有所有 components 都成功时它才成功
+ 
+ 例如，一个 consume 三个 characters、丢弃第二个、返回第一个和第三个作为 pair 的 parser 可以用 applicative style 定义：
 
 ```hs
 three :: Parser (Char,Char)
