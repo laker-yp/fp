@@ -394,7 +394,7 @@ nats = do symbol "["
 []
 ```
 
-### Parsing Arithmetic Expressions
+# Parsing Arithmetic Expressions
 
 在这个 example 中，我们考虑 arithmetic expressions：它们由 natural numbers 通过 addition、multiplication 和 parentheses 构造出来。我们假设 addition 和 multiplication 都向右结合，并且 multiplication 的 priority，也就是 precedence，高于 addition。例如，`2+3+4` 表示 `2+(3+4)`，而 `2*3+4` 表示 `(2*3)+4`。
 
@@ -438,10 +438,10 @@ nat    ::= 0 | 1 | 2 | ...
 ```haskell
 expr :: Parser Int
 expr = do t <- term
-          do symbol "+"
+          do symbol "+"   --检查后面是否有“+”
              e <- expr
              pure (t + e)
-           <|> pure t
+           <|> pure t      --<|>相当于else，取决于第二个do是否成立
 
 term :: Parser Int
 term = do f <- factor
