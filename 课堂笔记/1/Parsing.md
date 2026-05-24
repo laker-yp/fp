@@ -129,19 +129,21 @@ instance Applicative Parser where
 
 ```
 对于pure
+### 理解`pure`：就是普通的拆包(pure 1) 就是1
 ```hs
 > parse (pure 1) "abc"
 [(1,"abc")]
 ```
  `<*>` 的意思是：一个 parser 返回 function，另一个 parser 返回 argument，组合后得到一个 parser，它返回 function applied to argument 的结果；并且只有所有 components 都成功时它才成功
  
- 例如，一个 consume 三个 characters、丢弃第二个、返回第一个和第三个作为 pair 的 parser 可以用 applicative style 定义：
+ 例如，连续吃三个char、丢弃第二个、返回第一个和第三个作为 pair 的 parser 可以用 applicative style 定义：
 
 ```hs
 three :: Parser (Char,Char)
 three = pure g <*> item <*> item <*> item
         where g x y z = (x, z)
 ```
+### 理解`<*>`：pure g <*> item 就是把g应用到item
 
 例如：
 
@@ -153,7 +155,7 @@ three = pure g <*> item <*> item <*> item
 []
 ```
 
-最后，我们让 `Parser` type 成为 monad：
+## `Parser` monad：
 
 ```haskell
 instance Monad Parser where
@@ -169,10 +171,11 @@ instance Monad Parser where
 
 ```hs
 three :: Parser (Char,Char)
-three = do x <- item
-           item
-           z <- item
-           pure (x,z)
+three = do
+  x <- item
+  item
+  z <- item
+  pure (x,z)
 ```
 
 另一种自然的 parser combination 是：先把一个 parser 应用到 input string 上；如果失败，就把另一个 parser 应用到同一个 input 上。这里我们可以用 `empty` 和 choice operator `<|>` 实现这个想法。`empty` parser 无论 input 是什么都失败，而 choice operator 如果第一个 parser 成功，就返回它的 result；否则对同一个 input 使用第二个 parser：
