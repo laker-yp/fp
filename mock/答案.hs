@@ -46,7 +46,16 @@ applyNTimes mx mf n = reverse <$> go n
    xs <- go (m - 1)
    x  <- mf (head xs)
    pure (x : xs)
+--简单版如下
+applyNTimes :: Monad m => m a -> (a -> m a) -> Int -> m [a]
+applyNTimes mx mf 0 = do
+  x <- mx
+  pure [x]
 
+applyNTimes mx mf n = do
+  x  <- mx
+  xs <- applyNTimes (mf x) mf (n - 1)
+  pure (x : xs)
 ---------------------------------------------------------------------------------
 -- QUESTION 3
 ---------------------------------------------------------------------------------
