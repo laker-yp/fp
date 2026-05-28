@@ -55,6 +55,27 @@ isIncreasing (x:y:zs) = x < y && isIncreasing (y:zs)
 比如[1,2,3,4,5]先比1,2然后2,3...
 
 **Puzzle**（hard）. 你能不能写出另一个版本的 `isBST`，它也能在 linear time 内运行，但又**不**把 in-order traversal list 作为中间结果显式构造出来？
+```hs
+isBST :: Ord a => BT a -> Bool
+isBST t = check Nothing Nothing t
+  where
+    check :: Ord a => Maybe a -> Maybe a -> BT a -> Bool
+    check _ _ Empty = True
+
+    check lower upper (Fork x l r) =
+      withinLower lower x &&
+      withinUpper upper x &&
+      check lower (Just x) l &&
+      check (Just x) upper r
+
+    withinLower :: Ord a => Maybe a -> a -> Bool
+    withinLower Nothing  _ = True
+    withinLower (Just lo) x = lo < x
+
+    withinUpper :: Ord a => Maybe a -> a -> Bool
+    withinUpper Nothing  _ = True
+    withinUpper (Just hi) x = x < hi
+```
 
 正如你会记得的，binary search trees 的意义在于：如果它们足够平衡，那么它们就可以被快速搜索O（log n）：
 
