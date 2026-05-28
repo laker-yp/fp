@@ -196,8 +196,89 @@ withoutLargest (Fork x l r)     = Fork x l (withoutLargest r)
     8         只剩8，直接顶上去
 ```
 * 你能不能写一个 `delete'` 函数，使用 `Maybe` return type 来表示“没有东西可以删除”？
+```ha
+data BT a = Empty | Fork a (BT a) (BT a)
+  deriving (Show, Eq)
+
+delete' :: Ord a => a -> BT a -> Maybe (BT a)
+delete' _ Empty = Nothing
+
+delete' x (Fork y l r)
+  | x < y =
+      case delete' x l of
+        Nothing -> Nothing
+        Just l' -> Just (Fork y l' r)
+
+  | x > y =
+      case delete' x r of
+        Nothing -> Nothing
+        Just r' -> Just (Fork y l r')
+
+  | otherwise =
+      Just (deleteRoot (Fork y l r))
+
+
+deleteRoot :: BT a -> BT a
+deleteRoot (Fork _ Empty r) = r
+deleteRoot (Fork _ l Empty) = l
+deleteRoot (Fork _ l r) =
+  let (m, r') = removeMin r
+  in Fork m l r'
+
+
+removeMin :: BT a -> (a, BT a)
+removeMin (Fork x Empty r) = (x, r)
+removeMin (Fork x l r) =
+  let (m, l') = removeMin l
+  in (m, Fork x l' r)
+```
 
 * 你能不能把最后这两个函数 `largestOf` 和 `withoutLargest` 合并成一个函数，并用 pair type 作为结果，这样就可以得到一个更高效的 delete 函数？然后再进一步结合 `Maybe`，从而避免使用 `undefined`？
+```hs
+data BT a = Empty | Fork a (BT a) (BT a)
+  deriving (Show, Eq)
+
+
+removeLargest :: BT a -> Maybe (a, BT a)
+removeLargest Empty = Nothing
+
+removeLargest (Fork x l Empty) =
+  Just (x, l)
+
+removeLargest (Fork x l r) =
+  case removeLargest r of
+    Nothing -> Nothing
+    Just (m, r') -> Just (m, Fork x l r')
+
+
+delete' :: Ord a => a -> BT a -> Maybe (BT a)
+delete' _ Empty = Nothing
+
+delete' x (Fork y l r)
+  | x < y =
+      case delete' x l of
+        Nothing -> Nothing
+        Just l' -> Just (Fork y l' r)
+
+  | x > y =
+      case delete' x r of
+        Nothing -> Nothing
+        Just r' -> Just (Fork y l r')
+
+  | otherwise =
+      Just (deleteRoot (Fork y l r))
+
+
+deleteRoot :: BT a -> BT a
+deleteRoot (Fork _ Empty r) = r
+
+deleteRoot (Fork _ l Empty) = l
+
+deleteRoot (Fork _ l r) =
+  case removeLargest l of
+    Just (m, l') -> Fork m l' r
+    Nothing      -> r
+```
   
 # sort
 ## BST sort： quick sort 和 merge sort
