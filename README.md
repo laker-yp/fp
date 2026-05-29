@@ -1,6 +1,10 @@
 小笔记
 type不一定是Int，Bool这种单个单词，也可以是(a,b)，Rose a，等等
 
+x:xs 里面x不一定为单独一个单一元素，它代表的只是一个列表的第一个元素，如果列表元素为[[a]]，则x为[a]
+
+case 里面为 结果的type， ->前面为具体的结果值
+
 conjunction &&
 disjunction ||
 
