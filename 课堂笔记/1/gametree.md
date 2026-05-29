@@ -90,11 +90,11 @@ Remove 2 8 --把第三堆的石头去掉搬走八个,所以这时候的board就�
 ```haskell
 --                    (Remove 2 8, [1,2,0])
 nimPlays :: NimBoard -> [(NimMove,NimBoard)]
---   list comprehension [ 生成结果 | 枚举 i, 拆分 list, 枚举 k ]
-nimPlays heaps = [(Remove i k, (hs ++ h-k : hs')) 
-                 | i <- [0..length heaps-1], --【i被注入第一个堆(0)到最后一个堆(length heaps-1)的index】
-                   let (hs, h:hs') = splitAt i heaps,  --【将heaps(board那个list)以i为基准分为左右两边】
-                   k <- [1..h]] --【从当前 heap 里，可以拿走 1 到 h 个石头】
+
+nimPlays heaps = [(Remove i k, (hs ++ h-k : hs'))      -- [ 生成结果 | 枚举 i, 拆分 list, 枚举 k ]
+                 | i <- [0..length heaps-1],           --【i被注入第一个堆(0)到最后一个堆(length heaps-1)的index】
+                   let (hs, h:hs') = splitAt i heaps   --【将heaps(board那个list)以i为基准分为左右两边】
+                   k <- [1..h]]                        --【从当前 heap 里，可以拿走 1 到 h 个石头】
 ```
 比如nimPlays [1,2,8] = [....(Remove 2 8, [1,2,0])....]
 
