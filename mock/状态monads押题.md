@@ -1,7 +1,7 @@
 ```hs
 State s r
 ```
-`a` 是 state 的类型
+`s` 是 state 的类型
 
 `r`是最终 return 出来的 value 的类型
 
