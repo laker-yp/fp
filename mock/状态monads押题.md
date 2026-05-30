@@ -9,6 +9,7 @@ State s r
 * put 直接替换整个state，比如put(0,0)
 * modify f 把function f套到state上面
  * modify = get 后立刻 put 一个修改后的版本。
+
 # Haskell State Monad 练习答案整理
 ```hs
 int y = 初始值;
@@ -26,6 +27,9 @@ helper n
       put 更新后的值
       helper 新的n
   | otherwise = return ()
+get :: m s
+put :: s -> m ()
+modify :: MonadState s m => (s -> s) -> m ()
 ```
 
 ## 目录
