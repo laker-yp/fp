@@ -10,6 +10,23 @@ State s r
 * modify f 把function f套到state上面
  * modify = get 后立刻 put 一个修改后的版本。
 # Haskell State Monad 练习答案整理
+```hs
+int y = 初始值;
+
+while (条件) {
+    y = 更新后的值;
+    n = n - 1;
+}
+
+return y;
+对应
+helper n
+  | 条件 = do
+      y <- get
+      put 更新后的值
+      helper 新的n
+  | otherwise = return ()
+```
 
 ## 目录
 
