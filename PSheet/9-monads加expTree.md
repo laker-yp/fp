@@ -190,25 +190,21 @@ run (SubC n c)   = do
 	sequence of commands.  This makes sense: we first store `7`, then add `14` to the stored value
 	and then divide by `3`, leaving a result of `7`.
 
-## Using Monads to Manipulate Directories
+# Using Monads to Manipulate Directories 中文版答案
 
-Cnsider the following datatype `Dir` to represent an idealized directory structure:
-### 答案
-```hs
+## 题目：使用 Monad 操作目录结构
+
+考虑下面的数据类型 `Dir`，它用来表示一个理想化的目录结构：
+
+```haskell
 data Dir = File String String
          | SubDir String [Dir]
          deriving Show
+```
 
+示例目录：
 
-logTraverse :: Dir -> Writer [String] ()
-logTraverse (File name _) = do
-  tell ["Passing file: " ++ name]
-
-logTraverse (SubDir name contents) = do
-  tell ["Entering directory: " ++ name]
-  mapM_ logTraverse contents
-  tell ["Leaving directory: " ++ name
-
+```haskell
 recipes :: Dir
 recipes = SubDir "Recipes" [ SubDir "Tex-Mex" [ File "Tacos" "meat, cheese, tomato"
                                               , File "Burrito" "tortilla, rice, beans"
@@ -222,17 +218,28 @@ recipes = SubDir "Recipes" [ SubDir "Tex-Mex" [ File "Tacos" "meat, cheese, toma
                            ]
 ```
 
-Here are two more tasks to practice using the pre-defined Monads fount in Haskell's `Control.Monad` packaged:
+下面有两个任务，用来练习 Haskell `Control.Monad` 包中预定义的 Monad。
 
-1.  Use the `Writer` monad (documentation [here](https://hackage.haskell.org/package/mtl-2.3.1/docs/Control-Monad-Writer-Lazy.html)) to record a log of entering and exiting subdirectories and passing files while traversing a directory strucure:
+---
 
-```hs
+## 任务 1：Writer Monad
+
+使用 `Writer` Monad 记录遍历目录结构时的日志：
+
+```haskell
 logTraverse :: Dir -> Writer [String] ()
 logTraverse = undefined
 ```
-For example, in `ghci` we have the following:
 
-```
+要求记录：
+
+- 进入子目录
+- 离开子目录
+- 经过文件
+
+例如在 GHCi 中：
+
+```haskell
 λ> putStr $ unlines $ execWriter $ logTraverse recipes
 Entering directory: Recipes
 Entering directory: French
@@ -250,67 +257,156 @@ Leaving directory: Tex-Mex
 Leaving directory: Recipes
 ```
 
-1. Now use the `State` monad (documentation [here](https://hackage.haskell.org/package/mtl-2.3.1/docs/Control-Monad-State-Lazy.html)) to implement a stateful computation which counts the number of files encountered on a traversal through the directory structure:
+---
 
-```hs
+## 答案：Writer Monad
+
+```haskell
+import Control.Monad.Writer
+
+data Dir = File String String
+         | SubDir String [Dir]
+         deriving Show
+
+logTraverse :: Dir -> Writer [String] ()
+logTraverse (File name _) = do
+  tell ["Passing file: " ++ name]
+
+logTraverse (SubDir name contents) = do
+  tell ["Entering directory: " ++ name]
+  mapM_ logTraverse contents
+  tell ["Leaving directory: " ++ name]
+```
+
+---
+
+## 任务 2：State Monad
+
+现在使用 `State` Monad 实现一个带状态的计算，用来统计遍历目录结构时遇到的文件数量：
+
+```haskell
 countFiles :: Dir -> State Int ()
 countFiles = undefined
 ```
-For example:
 
-```
+例如：
+
+```haskell
 λ> execState (countFiles recipes) 0
 6
 ```
 
-## Functors 
+---
 
-Recall the `map` function on lists which has type
+## 答案：State Monad
 
-```hs
+```haskell
+import Control.Monad.State
+
+countFiles :: Dir -> State Int ()
+countFiles (File _ _) = do
+  modify (+1)
+
+countFiles (SubDir _ contents) = do
+  mapM_ countFiles contents
+```
+
+也可以写成 `get` 和 `put` 的版本：
+
+```haskell
+countFiles :: Dir -> State Int ()
+countFiles (File _ _) = do
+  n <- get
+  put (n + 1)
+
+countFiles (SubDir _ contents) = do
+  mapM_ countFiles contents
+```
+
+---
+
+# Functors 中文版答案
+
+## 原文翻译
+
+回忆一下列表中的 `map` 函数：
+
+```haskell
 map :: (a -> b) -> [a] -> [b]
 ```
 
-The intuition for this higher-order function is that it "applies the function to each element of the list".  When we generalize this idea from lists to arbirary type constructors `f`, we obtain the `Functor` type class:
+它的直觉是：
 
-```hs
+> 把一个函数应用到列表中的每一个元素上。
+
+当我们把这个思想从列表推广到任意类型构造器 `f` 时，就得到了 `Functor` 类型类：
+
+```haskell
 class Functor f where
   fmap :: (a -> b) -> f a -> f b
 ```
 
-Here, as in the `Monad` type class, the variable `f` is not a type, but a *type constructor*.  For example, we have 
+这里和 `Monad` 类型类一样，变量 `f` 不是一个具体类型，而是一个类型构造器。
 
-```hs
+例如：
+
+```haskell
 instance Functor Maybe where 
-  fmap f Nothing = Nothing
-  fmap f (Just x) = Just (f x) 
+  fmap f Nothing  = Nothing
+  fmap f (Just x) = Just (f x)
 ```
 
-We again see the same intution: `Maybe` is a functor because there is a natural way to apply a function to the data carried by the type constructor.
+这说明 `Maybe` 是一个 Functor，因为我们可以自然地把函数应用到 `Maybe` 携带的数据上。
 
-1. Consider the following type of binary trees with data carried at the nodes:
+---
 
-	```hs
-	data Bin a = Lf
-	           | Nd a (Bin a) (Bin a)
-	```
+## 任务 3：二叉树的 Functor
 
-	Provide a `Functor` instance for this data type.
-```hs
+考虑下面这个二叉树类型，数据存储在节点中：
+
+```haskell
+data Bin a = Lf
+           | Nd a (Bin a) (Bin a)
+```
+
+为这个类型提供一个 `Functor` 实例。
+
+---
+
+## 答案：Bin 的 Functor
+
+```haskell
+data Bin a = Lf
+           | Nd a (Bin a) (Bin a)
+           deriving Show
+
 instance Functor Bin where
-  fmap f Lf         = Lf
-  fmap f (Nd a r l) = Nd (f a)(fmap f l)(famp f r)
+  fmap f Lf = Lf
+  fmap f (Nd a left right) =
+    Nd (f a) (fmap f left) (fmap f right)
 ```
 
-1. Consider the following data type which takes the "sum" of two type constructors:
+---
 
-    ```hs
-	data FSum f g a = FLeft (f a) | FRight (g a)
-	  deriving Show
-	```
+## 任务 4：FSum 的 Functor
 
-    Show that if both `f` and `g` are functors, then so is `FSum f g`.
-```hs
+考虑下面这个数据类型，它表示两个类型构造器的“和”：
+
+```haskell
+data FSum f g a = FLeft (f a) | FRight (g a)
+  deriving Show
+```
+
+证明：如果 `f` 和 `g` 都是 Functor，那么 `FSum f g` 也是 Functor。
+
+---
+
+## 答案：FSum 的 Functor
+
+```haskell
+data FSum f g a = FLeft (f a) | FRight (g a)
+  deriving Show
+
 instance (Functor f, Functor g) => Functor (FSum f g) where
   fmap h (FLeft x)  = FLeft (fmap h x)
   fmap h (FRight y) = FRight (fmap h y)
