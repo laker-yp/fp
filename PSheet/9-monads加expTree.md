@@ -13,39 +13,8 @@ int fac (int n) {
   }
   return y;
 ```
-Write this as a Haskell function using the state monad:
+hs版本
 ```
-facHelper :: Integer -> State Integer ()
-facHelper = undefined
-
-factorial :: Integer -> Integer
-factorial n = snd (runState (facHelper n) 1)
-```
-Hint: See how we define `fib'` using the state monad in the [monads handout](../LectureNotes/Sections/monads.md#fibstate).
-
-## Monadic Calculator
-
-### Background Material
-
-The modules `Control.Monad.Except` and `Control.Monad.State` contain
-definitions of various extensions of the `Monad` class.  We can use these
-to write functions which work for **any** monad `m` satisfying the correct
-interface.
-
-For example, the `MonadError` class, defined [here](https://hackage.haskell.org/package/mtl-2.3.1/docs/Control-Monad-Error-Class.html#t:MonadError),
-adds a method
-```haskell
-throwError :: e -> m a
-```
-allowing you to return an error of type `e`.
-
-Similarly, the `MonadState` class, defined [here](https://hackage.haskell.org/package/mtl-2.3.1/docs/Control-Monad-State-Class.html#t:MonadState) adds
-methods
-```haskell
-get :: m s
-put :: s -> m ()
-modify :: MonadState s m => (s -> s) -> m ()
-
 facHelper :: Integer -> State Integer ()
 facHelper n
   | n > 1 = do
@@ -53,8 +22,24 @@ facHelper n
       put (y * n)
       facHelper (n - 1)
   | otherwise = return ()
+
+--测试↓
+factorial :: Integer -> Integer
+factorial n = snd (runState (facHelper n) 1)
 ```
-which allow you to manipulate the state carried by the monad `m`.
+
+
+## Monadic Calculator
+
+```haskell
+get :: m s
+put :: s -> m ()
+modify :: MonadState s m => (s -> s) -> m ()
+
+```
+* `MonadError String m=>`意思是这个 m 必须会处理 String 错误
+* `MonadState Int m =>`  意思是这个m，它里面有一个 Int 类型的状态 state
+
 
 ### Implementation Tasks
 
@@ -70,7 +55,8 @@ which allow you to manipulate the state carried by the monad `m`.
 	Write an evaluator which runs in any monad supporting exceptions and which throws an error when it
 	encounters a division by zero.
 
-```haskell
+
+```haskell         
 eval :: MonadError String m => CalcExpr -> m Int
 eval (Val x) = return x
 
