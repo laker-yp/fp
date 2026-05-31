@@ -183,7 +183,7 @@ subtree (d:ds) (Branch _ children)
 
 ---
 
-## Game Trees
+# Game Tree难
 
 ### 题目
 
@@ -246,7 +246,7 @@ data Tree a b = Leaf b | Fork (Tree a b) a (Tree a b)
 
 ---
 
-### Implementation Task
+# 用不同的f g处理BT的leaf/node
 
 实现 higher-order function `applyfuns`：
 
@@ -327,7 +327,7 @@ Fork (Fork (Fork (Leaf False) 6 (Leaf True)) 5 (Leaf True)) 8 (Fork (Leaf True) 
 
 ## Exercise 2 - Updating Nodes Along a Route
 
-### Background Material
+# BT 地址address问题
 
 这里使用一种只在 node 存数据的 binary tree：
 
@@ -393,6 +393,18 @@ updateNodes (GoRight:ds) f (Node l x r) =
 1. 如果 route 用完了，就停下，不继续修改下面的 subtree。
 2. 如果 route 太长，已经走到 `Empty`，就停下，剩下的 direction 直接忽略。
 3. `updateNodes` 会修改 route 经过的所有 node，包括 root。
+
+# 预测押题 (BT的address大多数都在笔记里面了，rose的address在上边）
+押题 ：只更新终点，不更新路上节点
+```
+updateAtRoute :: Route -> (a -> a) -> BinTree a -> BinTree a
+updateAtRoute _ _ Empty = Empty
+updateAtRoute [] f (Node l x r) = Node l (f x) r
+updateAtRoute (GoLeft:ds) f (Node l x r) =
+  Node (updateAtRoute ds f l) x r
+updateAtRoute (GoRight:ds) f (Node l x r) =
+  Node l x (updateAtRoute ds f r)
+```
 
 ---
 
