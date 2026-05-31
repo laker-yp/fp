@@ -280,7 +280,7 @@ Just 5
 > 10 `dive` 0
 Nothing
 ```
-### 让【maybe Int】也能被计算
+# 让【maybe Int】也能被计算
 但现在假设你想做 ``3 + (10 `dive` 0)``。你可能期待得到 `Nothing`，但是输出为error
 
 因为`+` 需要它右边的参数是 `Int`而我们写的是``(10 `div` 0)`` 是一个 `Maybe Int`
@@ -319,7 +319,7 @@ adde'' xm ym = case xm of
 
 之后我们会看到一种更简洁的方式，用 *monads* 来写这种 definitions。但现在我们先继续使用 pattern matching 和 cases。
 
-### Example: 找出a在[a]中出现的第一个位置
+## Example: 找出a在[a]中出现的第一个位置
 
 ```haskell
 firstPosition :: Eq a => a -> [a] -> Maybe Int
@@ -331,24 +331,41 @@ firstPosition v (x:xs)
                            Just n  -> Just (n+1)
 
 ->的意思是:表示“匹配到这个 pattern，就返回这个结果”
+
+firstPosition :: Eq a => a -> [a] -> Maybe Int
+firstPosition v [] = Nothing
+firstPosition v (x:xs)
+  | v == x    = Just 0
+  | otherwise = fmap (+1) (firstPosition v xs)
+
+firstPosition :: Eq a => a -> [a] -> Maybe Int  --monads
+firstPosition v [] = Nothing
+firstPosition v (x:xs)
+  | v == x    = Just 0
+  | otherwise = do
+      n <- firstPosition v xs
+      return (n + 1)
 ```
-例如：
-```hd
-> firstPosition 'c' ['a'..'z']
-Just 2
-> firstPosition '!' ['a'..'z']
-Nothing
-```
-检查某元素v是否在list里面
+
+## 检查某元素v是否在list里面
 ```haskell
 testFirstPosition :: Eq a => a -> [a] -> Bool
 testFirstPosition v xs =  case firstPosition v xs of
                            Nothing -> and [ xs !! i /= v | i <- [0 .. length xs - 1]]
                            Just n  -> xs !! n == v
 ```
+### monads版
 ```hs
-> testFirstPosition 'w' ['a'..'z']
-True
+testFirstPosition :: Eq a => a -> [a] -> Bool
+testFirstPosition v xs =
+  case result of
+    Nothing -> and [ xs !! i /= v | i <- [0 .. length xs - 1]]
+    Just b  -> b
+  where
+    result :: Maybe Bool
+    result = do
+      n <- firstPosition v xs
+      return (xs !! n == v)
 ```
 *Task*. 定义`allPositions :: Eq a => a -> [a] -> [Int]`，找出一个 element 在 list 中出现的所有index
 
