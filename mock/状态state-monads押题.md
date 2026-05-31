@@ -1,9 +1,4 @@
-# Haskell State Monad 超加强押题答案集（多题型覆盖版）
-
-> 基于原版 State Monad 押题继续扩展  
-> 风格：**标题 + 答案代码为主**  
-> 目的：考试遇到 State Monad 题时，可以直接套模板  
-> 核心：`get`、`put`、`modify`、`return ()`、`runState`、`evalState`、`execState`
+# Haskell State Monad
 
 ---
 
