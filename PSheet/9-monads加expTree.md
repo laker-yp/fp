@@ -37,6 +37,8 @@ put :: s -> m ()
 modify :: MonadState s m => (s -> s) -> m ()
 
 ```
+
+
 * `MonadError String m=>`意思是这个 m 必须会处理 String 错误
 * `MonadState Int m =>`  意思是这个m，它里面有一个 Int 类型的状态 state
 
@@ -93,7 +95,13 @@ Right 11
 Left "Division by zero"
 ```
 # 第二题：计算机
-1. Now let's imagine a calculator with an integer state which allows the user to update this state using
+* `MonadState Int m =>`  意思是这个m，它里面有一个 Int 类型的状态 state
+ * get :: MonadState Int m => m Int  --从当前 state 里面拿出一个 Int，作为结果返回
+ * put 10 :: MonadState Int m => m () --把当前 state 改成 10
+ * modify (+1) :: MonadState Int m => m () --把当前 state 加 1，结果也是 ()
+
+  
+1. Now let's imagine a calculator with an `integer state` which allows the user to `update` this state using
    commands. Here is a data type describing a list of commands:
     ```haskell
     data CalcCmd = EnterC
