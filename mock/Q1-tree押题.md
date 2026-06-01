@@ -1,7 +1,6 @@
 # Haskell 线下编程押题模板整理
 
-> 重点：Tree / List / Predicate / Transformer / Aggregator 题型  
-> 使用方式：考前直接背模板，不需要逐句解释。
+地址类的在P-sheet week6
 
 ---
 
