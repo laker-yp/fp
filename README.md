@@ -6,6 +6,7 @@
 `read` "True" :: Bool
 -- True
 
+or 在 Haskell 里是一个函数，意思是：判断一个 Bool 列表里有没有 True。
 ### maybe的转化
 ```
 f :: Input -> Output
