@@ -179,6 +179,62 @@ subtree (d:ds) (Branch _ children)
   | d < 0 || d >= length children = Nothing
   | otherwise = subtree ds (children !! d)
 
+--地址对应的子树大小
+sizeRose :: Rose a -> Int
+sizeRose (Branch _ children) =
+  1 + sum (map sizeRose children)
+
+subtreeSizeAt :: Address -> Rose a -> Maybe Int
+subtreeSizeAt addr tree =
+  case subtree addr tree of
+    Nothing -> Nothing
+    Just t  -> Just (sizeRose t)
+用do写：
+subtreeSizeAt :: Address -> Rose a -> Maybe Int
+subtreeSizeAt addr tree = do
+  t <- subtree addr tree
+  return (sizeRose t)
+
+=====难=====
+根据地址改值
+updateAtAddress :: Address -> a -> Rose a -> Maybe (Rose a)
+updateAtAddress [] new (Branch _ children) =
+  Just (Branch new children)
+
+updateAtAddress (d:ds) new (Branch x children)
+  | d < 0 || d >= length children = Nothing
+  | otherwise =
+      case updateAtAddress ds new (children !! d) of
+        Nothing -> Nothing
+        Just newChild ->
+          Just (Branch x (replaceNth d newChild children))
+根据地址插入孩子
+insertChildAt :: Address -> Rose a -> Rose a -> Maybe (Rose a)
+insertChildAt [] newChild (Branch x children) =
+  Just (Branch x (children ++ [newChild]))
+
+insertChildAt (d:ds) newChild (Branch x children)
+  | d < 0 || d >= length children = Nothing
+  | otherwise =
+      case insertChildAt ds newChild (children !! d) of
+        Nothing -> Nothing
+        Just updatedChild ->
+          Just (Branch x (replaceNth d updatedChild children))
+删除某个地址对应的子树
+deleteAtAddress :: Address -> Rose a -> Maybe (Rose a)
+deleteAtAddress [] _ = Nothing
+
+deleteAtAddress [d] (Branch x children)
+  | d < 0 || d >= length children = Nothing
+  | otherwise = Just (Branch x (deleteNth d children))
+
+deleteAtAddress (d:ds) (Branch x children)
+  | d < 0 || d >= length children = Nothing
+  | otherwise =
+      case deleteAtAddress ds (children !! d) of
+        Nothing -> Nothing
+        Just updatedChild ->
+          Just (Branch x (replaceNth d updatedChild children))
 ```
 
 ---
