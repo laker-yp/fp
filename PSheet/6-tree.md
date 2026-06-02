@@ -461,6 +461,148 @@ updateAtRoute (GoLeft:ds) f (Node l x r) =
 updateAtRoute (GoRight:ds) f (Node l x r) =
   Node l x (updateAtRoute ds f r)
 ```
+# BT的地址
+```hs
+data BTree a = Empty
+             | Node a (BTree a) (BTree a)
+  deriving (Eq, Show)
+
+data Direction = L | R
+  deriving (Eq, Show)
+
+type Address = [Direction]
+
+
+--返回全部合法address
+validAddresses :: BTree a -> [Address]
+validAddresses Empty = []
+
+validAddresses (Node _ left right) =
+  [] :
+  [L : addr | addr <- validAddresses left] ++
+  [R : addr | addr <- validAddresses right]
+
+
+--检查一个address是否合理
+isValid :: Address -> BTree a -> Bool
+isValid [] Empty = False
+isValid [] _     = True
+
+isValid _ Empty = False
+
+isValid (L:ds) (Node _ left _) =
+  isValid ds left
+
+isValid (R:ds) (Node _ _ right) =
+  isValid ds right
+
+
+--根据address找node
+getAtAddress :: BTree a -> Address -> Maybe a
+getAtAddress Empty _ = Nothing
+
+getAtAddress (Node x _ _) [] =
+  Just x
+
+getAtAddress (Node _ left _) (L:ds) =
+  getAtAddress left ds
+
+getAtAddress (Node _ _ right) (R:ds) =
+  getAtAddress right ds
+
+
+--根据address找子树
+subtree :: Address -> BTree a -> Maybe (BTree a)
+subtree _ Empty = Nothing
+
+subtree [] t =
+  Just t
+
+subtree (L:ds) (Node _ left _) =
+  subtree ds left
+
+subtree (R:ds) (Node _ _ right) =
+  subtree ds right
+
+
+--计算树的大小
+sizeBTree :: BTree a -> Int
+sizeBTree Empty = 0
+
+sizeBTree (Node _ left right) =
+  1 + sizeBTree left + sizeBTree right
+
+
+--根据address找子树大小
+subtreeSizeAt :: Address -> BTree a -> Maybe Int
+subtreeSizeAt addr tree =
+  case subtree addr tree of
+    Nothing -> Nothing
+    Just t  -> Just (sizeBTree t)
+
+
+--根据address找子树大小 do版本
+subtreeSizeAtDo :: Address -> BTree a -> Maybe Int
+subtreeSizeAtDo addr tree = do
+  t <- subtree addr tree
+  return (sizeBTree t)
+
+
+--根据address更新node的值
+updateAtAddress :: Address -> a -> BTree a -> Maybe (BTree a)
+updateAtAddress _ _ Empty = Nothing
+
+updateAtAddress [] new (Node _ left right) =
+  Just (Node new left right)
+
+updateAtAddress (L:ds) new (Node x left right) =
+  case updateAtAddress ds new left of
+    Nothing      -> Nothing
+    Just newLeft -> Just (Node x newLeft right)
+
+updateAtAddress (R:ds) new (Node x left right) =
+  case updateAtAddress ds new right of
+    Nothing       -> Nothing
+    Just newRight -> Just (Node x left newRight)
+
+
+--根据address插入/替换一个子树
+--注意：这里的意思是把某个位置的子树直接替换成newTree
+replaceSubtree :: Address -> BTree a -> BTree a -> Maybe (BTree a)
+replaceSubtree _ _ Empty = Nothing
+
+replaceSubtree [] newTree _ =
+  Just newTree
+
+replaceSubtree (L:ds) newTree (Node x left right) =
+  case replaceSubtree ds newTree left of
+    Nothing      -> Nothing
+    Just newLeft -> Just (Node x newLeft right)
+
+replaceSubtree (R:ds) newTree (Node x left right) =
+  case replaceSubtree ds newTree right of
+    Nothing       -> Nothing
+    Just newRight -> Just (Node x left newRight)
+
+
+--根据address删除一个子树
+--这里删除的意思是把目标位置变成Empty
+deleteAtAddress :: Address -> BTree a -> Maybe (BTree a)
+deleteAtAddress _ Empty = Nothing
+
+deleteAtAddress [] _ =
+  Just Empty
+
+deleteAtAddress (L:ds) (Node x left right) =
+  case deleteAtAddress ds left of
+    Nothing      -> Nothing
+    Just newLeft -> Just (Node x newLeft right)
+
+deleteAtAddress (R:ds) (Node x left right) =
+  case deleteAtAddress ds right of
+    Nothing       -> Nothing
+    Just newRight -> Just (Node x left newRight)
+```
 
 ---
 
